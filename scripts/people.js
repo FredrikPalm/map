@@ -294,23 +294,94 @@ function randomCity(){
 	return cities[random(0,cities.length)];
 }
 
-function generateCity(area){
-	alert("generateCity");
-	return; //not used anyway
-	if(area.tiles[0].type != "settlement"){
-		return;
+function changeCityPopulation(city, amount){
+	// affects city.population and density. 
+	if(amount != 0){
+		city.population += amount;
+		city.density = city.population / city.tiles.length;
+		var perTile = Math.round(amount / city.tiles.length); 
+		$.each(city.tiles, function(i, tile){
+			lookUpCoord(tile).population += perTile;
+		});
+	}	
+}
+
+function changeCitySize(city, amount){
+	// affects city.tiles and density
+	var oldDensity = city.population / (city.tiles.length);
+	city.density = city.population / (city.tiles.length + amount);
+	if(amount > 0){
+		var candidates = [];
+		$.each(city.tiles, function(i,val){
+			var tile = lookUpCoord(val);
+			var r = val;
+			//"move" people from this tile to the new
+			tile.population -= Math.min(tile.population, Math.abs(oldDensity - city.density));
+			if(tile.borders != null)
+				$.each(tile.borders, function(k, val2){
+					if(val2 == "left"){
+						var t = lookUpCoord(r.x - 1, r.y);
+						if(t.type == "grass")
+							candidates.push(t);
+					}
+					else if(val2 == "below"){
+						var t = lookUpCoord(r.x, r.y + 1);
+						if(t.type == "grass")
+							candidates.push(t);
+					}
+					else if(val2 == "above"){
+						var t = lookUpCoord(r.x, r.y - 1);
+						if(t.type == "grass")
+							candidates.push(t);
+					}
+					else if(val2 == "right"){
+						var t = lookUpCoord(r.x + 1, r.y);
+						if(t.type == "grass")
+							candidates.push(t);
+					}	
+				});
+		});
+		candidates = candidates.sort(function(a,b){return b.value - a.value;});
+		var i = 0; 
+		while(amount-- && i < candidates.length){
+			var tile = candidates[i];
+			tile.type = "settlement";
+			//remove tile from old field
+			if(tile.field != undefined){
+				//TODO fix...
+				var area = world.areas[tile.field];
+				var index = member(tile.globalPosition, area.tiles);
+				area.tiles.splice(index);
+			}
+			//add tile to new field
+			tile.field = city.id;
+			addToArea(city, tile.globalPosition);
+			tile.population = city.density;
+			i++;
+			//TODO borders
+		}
 	}
-	var city = new City();
-	city.population = 0;
-	city.people = [];
-	city.value = 0;
-	for(var i = 0; i < area.tiles.length; i++){
-		city.population += area.tiles[i].population;
-		city.resources; //+= area[i].resources;
-		city.value += area.tiles[i].value;
-		city.people.push(area.tiles[i].people);
+	else if(amount < 0){
+		amount = Math.min(city.tiles.length - 1, Math.abs(amount)); // at least one tile left
+		var candidates = [];
+		$.each(city.tiles, function(i,val){
+			var tile = lookUpCoord(val);
+			tile.population += Math.abs(oldDensity - city.density);
+			candidates.push(tile);
+		});
+		candidates = candidates.sort(function(a,b){return a.value - b.value;});
+		i = 0;
+		while(amount-- && i < candidates.length){
+			var tile = candidates[i];
+			var index = member(tile.globalPosition, city.tiles);
+			city.tiles.splice(index);
+			tile.type = "grass";
+			tile.field = "?";
+			//TODO fix
+			i++;
+			//TODO borders
+		}
 	}
-	return city;
 }
 
 function calculateStatistics(){

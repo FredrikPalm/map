@@ -521,14 +521,12 @@ function checkAreas(worldT){
 			var tile = worldT.tiles[x][y];
 			for(var nx = -1; nx < 2; nx++){
 				for(var ny = -1; ny < 2; ny++){	
+					tile.borders = [];
 					var cx = x+nx;
 					var cy = y+ny;
 					if((nx == 0 && ny == 0) || (cx > worldT.sizeX-1) || (cx < 0) || (cy > worldT.sizeY-1) || (cy < 0) || tile.type != worldT.tiles[cx][cy].type){
 						//add borders
 						if(Math.abs(nx) != Math.abs(ny)){
-							if(tile.borders == null){
-								tile.borders = [];
-							}
 							switch(nx){
 								case -1:
 									//add border to the left
@@ -611,7 +609,7 @@ function inBounds(world,x,y){
 
 function generateResourcesforTile(type, areaType)
 {
-	var res = [];
+	var res = {};
 	var keys = Object.keys(resourceData);
 	for(var i = keys.length;i--;) 
 	{

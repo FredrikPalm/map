@@ -40,14 +40,21 @@ function cityHistFacts(culture,city){
 
 function Evaluator(field, city, comparison, cutOff){
 	var value = 0;
-	for(var i = 0; i < city.tiles.length; i++){
-		var tile = lookUpCoord(city.tiles[i]);
-		if(tile.resources.value === undefined) continue;
-			value += tile.resources.field;
+	if(city[field] == undefined){
+		for(var i = 0; i < city.tiles.length; i++){
+			var tile = lookUpCoord(city.tiles[i]);
+			if(tile.resources[field] !== undefined){
+				value += tile.resources[field];
+			}
+		}
 	}
-	function a(change){
+	else{
+		value = city[field];
+	}
+
+	function a(city, change){
 		if(change !== undefined){ 
-			value += change;
+			value = change;
 		}
 		return comparison(value / city.population, cutOff);
 	};
@@ -131,6 +138,11 @@ function analyseCities(){
 		var xMax = -1;
 		var yMin = Infinity;
 		var yMax = -1;
+		
+		var food = 0;
+		var drink = 0;
+		//TODO other resources as necessary
+
 		for(var k = 0; k < city.tiles.length; k++){
 			var tile = lookUpCoord(city.tiles[k]);
 			if(tile.population !== undefined) pop += tile.population;
@@ -142,8 +154,17 @@ function analyseCities(){
 			if(x > xMax){ xMax = x; }
 			if(y < yMin){ yMin = y; }
 			if(y > xMax){ yMax = y; }
+
+			$.each(tile.resources, function(i,val){
+				food += val * resourceData[i].foodValue;
+				drink += val * resourceData[i].drinkValue;
+			});
+			//TODO other resources as necessary
+
 		}
 		city.population = pop;
+		city.food = food;
+		city.drink = drink;
 		var xMean = xTot / city.tiles.length;
 		var yMean = yTot / city.tiles.length;
 		var radius = Math.max ((xMean - xMin), (yMean - yMin), (xMax - xMean), (yMax - yMean));
@@ -178,14 +199,15 @@ function histFacts(culture, city)
 	var less = function(a,b){return a < b;};
 	var more = function(a,b){return a > b;};
 	var same = function(a,b){return Math.abs(a-b) < 1;};
-	var m = makeEffectFunction(culture,city);
+	var m = makeEventEffect(city,culture);
 	//								  returns false if one-shot
 	/* variable, 	                 evaluator,                        effect,   
 	Ab=Abundance, La = Lack						
 												                  //use +-Infinity to set to 0 or 1000                          */
-	this.AbFood = new histFact(Evaluator("food", city, more, 1), m(["Rebellion", -2])),
-	this.LaFood = new histFact(Evaluator("food", city, less, 0.5), m(["Rebellion", 2])),
-	this.AbIron = new histFact(Evaluator("iron", city, more, 0.02), m(["MilitaryMight", 1]))
+	this.AbFood = new histFact(Evaluator("food", city, more, 1), m(["BoomingPopulation", "+2"], ["Rebellion", "-2"])),
+	this.LaFood = new histFact(Evaluator("food", city, less, 0.5), m(["Rebellion", "+2"])),
+	this.AbIron = new histFact(Evaluator("iron", city, more, 0.02), m(["MilitaryMight", "+1"])),
+	this.LaSpace = new histFact(Evaluator("density", city, less, 0.001), m());
 }
 
 
@@ -304,9 +326,13 @@ var histEvents = function(culture, city)
 {	//								  returns false if one-shot
 	/* variable, 	        base chance,      effect,           args   */
 	//probably should have a mean length as well: great warrior lasts 10 years +-10 for instance
+
+	//operators: =, +, -, *, / are self-explanatory. > only increases if value != 0. ! sets baseChance
+
 	var m = makeEventEffect(city,culture);
 	this.Anarchy = new histEvent(1, m(["Anarchy","+50"],["GreatLeader","=0"],["CivilWar","+5"])),
 	this.Authoritarian = new histEvent(4, m(["Democracy", "=0"],["Dictatorship","+3"],["CivilWar","-2"],["GreatArtist","-3"])),
+	this.BoomingPopulation = new histEvent(0, function(culture,city){city.population += random(Math.floor(city.population / 10));}),
 	this.CivilWar = new histEvent(1, function(culture,city,arg1){ }, 1),
 	this.ConqueredByX = new histEvent(0,function(culture,city,arg1){}, 1),
 	this.ConqueredX = new histEvent(0, function(culture,city,arg1){}, 1),
@@ -318,9 +344,10 @@ var histEvents = function(culture, city)
 	this.GreatLeader = new histEvent(5, function(culture,city){},0),
 	this.GreatEngineer = new histEvent(5, function(culture,city){},0),
 	this.GreatPhilosopher = new histEvent(30, m(["GreatPhilosopher","+500"],["Democracy", ">10"],["Dictatorship","-3"],["CivilWar","-2"],["GreatArtist","+3"])),
-	this.GreatWarrior = new histEvent(5, function(culture,city){},0),
-	this.HappensOnce = new histEvent(5, m(["HappensOnce", "=1000"],["HappensOften", "=0"])),
-	this.HappensOften = new histEvent(100, function(){});
+	this.GreatWarrior = new histEvent(5, function(culture,city){},0);
+	var mH = m(["HappensOnce", "=1000"],["HappensOften", "=100"]);
+	this.HappensOnce = new histEvent(5, function(cu,ci){ci.name = "Test"; mH(cu,ci);}),
+	this.HappensOften = new histEvent(0, function(){});
 	this.HeldOffByX = new histEvent(0, function(culture,city,arg1){},1),
 	this.HeldOffX = new histEvent(0, function(culture,city,arg1){},1), //       if: turmoil and neither is strong
 	this.InConflictWithX = new histEvent(2, function(culture,city,arg1){},1),
@@ -336,6 +363,7 @@ var histEvents = function(culture, city)
 	this.ReceivedReligionFrom = new histEvent(0,function(culture,city,arg1){},0),
 	this.Religious = new histEvent(6, function(culture,city,arg1){},1), 
 	this.Rich = new histEvent(0, function(culture,city){},0),             // if: high value                                        effect: + democracy, + rebellion, - wisdom
+	this.Starvation = new histEvent(0, function(culture,city){city.population -= random(Math.floor(city.population / 10));}),
 	this.SpawnedReligion = new histEvent(2, function(culture,city,arg1){},1),
 	this.SpreadReligionTo = new histEvent(0,function(culture,city,arg1){},1),
 	this.Tradesmen = new histEvent(2, function(culture,city,arg1){},1), //         if: has abundance of resource, or lacks one.	   effect: + wealth, + in Turmoil, + Democracy
@@ -430,7 +458,7 @@ function generateHistory(years){
 				});
 
 				$.each(city.facts, function(n,val){
-					if(val.inEffect){
+					if(val.inEffect = val.evaluation(city)){
 						val.effect(cultures[i],city);
 					}
 				});
@@ -449,7 +477,6 @@ function generateHistory(years){
 							}
 							city.history[year].eventsStart.push({"event":name, "id":id});
 						}
-						print("Event continues: " + name + " in " + city.id);
 						currEvent.inEffect = true; currEvent.effect(cultures[i],city);
 					}
 					else if(currEvent.inEffect){
