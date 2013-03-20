@@ -123,15 +123,24 @@ function addToArea(area,location){
 	lookUpCoord(location).field = area.id;
 }
 function appendAreas(area1,area2){
-		/*This can probably be improved*/
-		for(var i = 0; i < area2.tiles.length; i++)
-		{
-			addToArea(area1, area2.tiles[i]);
+	/*This can probably be improved*/
+	for(var i = 0; i < area2.tiles.length; i++)
+	{
+		addToArea(area1, area2.tiles[i]);
+	}
+	areas['totalAmount'] = areas['totalAmount'] - 1;
+	areas[area2.type] = areas[area2.type] - 1;
+	delete areas[area2.id];
+}
+function removeFromArea(area,location){
+	$.each(area.tiles, function(i,val){
+		if(val == undefined) console.log(area.id + " " + i);
+		if(val.x == location.x && val.y == location.y){
+			area.tiles.splice(i,1);
+			return false;
 		}
-		areas['totalAmount'] = areas['totalAmount'] - 1;
-		areas[area2.type] = areas[area2.type] - 1;
-		delete areas[area2.id];
-	};
+	});
+}
 
 function timeDiff(t0,t1,message){
 	print(message + (t0.getTime() - t1.getTime()) +  "ms");
@@ -174,6 +183,12 @@ function member(element, array){
 	}
 	return -1;
 }
+
+Array.prototype.remove = function(e) {
+  var i = member(e,this);
+  if(i == -1) return this.length;
+  return this.length -= this.splice(i,1).length;
+};
 
 function getUrlVar(afterChar) {
 	afterChar = (afterChar == undefined) ? "#" : afterChar;

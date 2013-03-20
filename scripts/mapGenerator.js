@@ -519,9 +519,10 @@ function checkAreas(worldT){
 	for(var x = 0; x < worldT.sizeX; x++){
 		for(var y = 0; y < worldT.sizeY; y++){
 			var tile = worldT.tiles[x][y];
+			tile.borders = [];
+			var alone = true;
 			for(var nx = -1; nx < 2; nx++){
 				for(var ny = -1; ny < 2; ny++){	
-					tile.borders = [];
 					var cx = x+nx;
 					var cy = y+ny;
 					if((nx == 0 && ny == 0) || (cx > worldT.sizeX-1) || (cx < 0) || (cy > worldT.sizeY-1) || (cy < 0) || tile.type != worldT.tiles[cx][cy].type){
@@ -552,6 +553,7 @@ function checkAreas(worldT){
 						}
 					}
 					else{
+						alone = false;
 						var nTile = worldT.tiles[cx][cy];
 						if(tile.field != null){
 							if(nTile.field != null){
@@ -587,6 +589,17 @@ function checkAreas(worldT){
 						}
 					} 
 				}
+			}
+			if(alone){
+				var field = new Area();
+				field.id = "a"+areas['id']++;
+				field.name = "TEMP " + tile.type.toUpperCase() + "AREA";
+				field.tiles = [tile.globalPosition];
+				field.type = tile.type;
+				areas[field.id] = field;
+				areas['totalAmount'] = areas['totalAmount'] + 1;
+				areas[field.type]++
+				tile.field = field.id;
 			}
 		}
 	}

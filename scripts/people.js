@@ -316,7 +316,7 @@ function changeCitySize(city, amount){
 			var tile = lookUpCoord(val);
 			var r = val;
 			//"move" people from this tile to the new
-			tile.population -= Math.min(tile.population, Math.abs(oldDensity - city.density));
+			tile.population -= Math.round(Math.min(tile.population, Math.abs(oldDensity - city.density)));
 			if(tile.borders != null)
 				$.each(tile.borders, function(k, val2){
 					if(val2 == "left"){
@@ -350,15 +350,70 @@ function changeCitySize(city, amount){
 			if(tile.field != undefined){
 				//TODO fix...
 				var area = world.areas[tile.field];
-				var index = member(tile.globalPosition, area.tiles);
-				area.tiles.splice(index);
+				removeFromArea(area,tile.globalPosition);
 			}
+			$.each(tile.neighbours, function(i,val){
+				var neighbour = lookUpCoord(val[0],val[1]);
+				var nx = val[0] - tile.globalPosition.x;
+				var ny = val[1] - tile.globalPosition.y;
+				if(Math.abs(nx) != Math.abs(ny)){
+					if(neighbour.type != "settlement"){
+						//add border
+						switch(nx){
+							case -1:
+								tile.borders.push("left"); 
+								neighbour.borders.push("right");
+								break;
+							case 1:
+								tile.borders.push("right");
+								neighbour.borders.push("left");
+								break;
+							case 0:
+								switch(ny){
+									case -1:
+										tile.borders.push("above");
+										neighbour.borders.push("below");
+										break;
+									case 1:
+										tile.borders.push("below");
+										neighbour.borders.push("above");
+										break;
+								}
+								break;
+						}
+					}
+					else if(neighbour.type == "settlement"){
+						//remove border
+						switch(nx){
+							case -1:
+								tile.borders.remove("left"); 
+								neighbour.borders.remove("right");
+								break;
+							case 1:
+								tile.borders.remove("right");
+								neighbour.borders.remove("left");
+								break;
+							case 0:
+								switch(ny){
+									case -1:
+										tile.borders.remove("above");
+										neighbour.borders.remove("below");
+										break;
+									case 1:
+										tile.borders.remove("below");
+										neighbour.borders.remove("above");
+										break;
+								}
+								break;
+						}
+					}
+				}
+			});
 			//add tile to new field
 			tile.field = city.id;
 			addToArea(city, tile.globalPosition);
-			tile.population = city.density;
+			tile.population = Math.round(city.density);
 			i++;
-			//TODO borders
 		}
 	}
 	else if(amount < 0){
@@ -373,13 +428,86 @@ function changeCitySize(city, amount){
 		i = 0;
 		while(amount-- && i < candidates.length){
 			var tile = candidates[i];
-			var index = member(tile.globalPosition, city.tiles);
-			city.tiles.splice(index);
+			removeFromArea(city,tile.globalPosition);
 			tile.type = "grass";
 			tile.field = "?";
-			//TODO fix
+			var alone = true;
+			$.each(tile.neighbours, function(i,val){
+				var neighbour = lookUpCoord(val[0],val[1]);
+				var nx = val[0] - tile.globalPosition.x;
+				var ny = val[1] - tile.globalPosition.y;
+				if(Math.abs(nx) != Math.abs(ny)){
+					if(neighbour.type != "grass"){
+						//add border
+						switch(nx){
+							case -1:
+								tile.borders.push("left"); 
+								neighbour.borders.push("right");
+								break;
+							case 1:
+								tile.borders.push("right");
+								neighbour.borders.push("left");
+								break;
+							case 0:
+								switch(ny){
+									case -1:
+										tile.borders.push("above");
+										neighbour.borders.push("below");
+										break;
+									case 1:
+										tile.borders.push("below");
+										neighbour.borders.push("above");
+										break;
+								}
+								break;
+						}
+					}
+					else if(neighbour.type == "grass"){
+						//remove border
+						if(alone){
+							tile.field = neighbour.field;
+							var area = world.areas[neighbour.field];
+							addToArea(area,tile.globalPosition);
+							alone = false;
+						}
+						switch(nx){
+							case -1:
+								tile.borders.remove("left"); 
+								neighbour.borders.remove("right");
+								break;
+							case 1:
+								tile.borders.remove("right");
+								neighbour.borders.remove("left");
+								break;
+							case 0:
+								switch(ny){
+									case -1:
+										tile.borders.remove("above");
+										neighbour.borders.remove("below");
+										break;
+									case 1:
+										tile.borders.remove("below");
+										neighbour.borders.remove("above");
+										break;
+								}
+								break;
+						}
+					}
+				}
+			});
+			if(tile.field = "?"){
+				//isolated
+				var field = new Area();
+				field.id = "a"+world.areas['id']++;
+				field.name = "TEMP " + tile.type.toUpperCase() + "AREA";
+				field.tiles = [tile.globalPosition];
+				field.type = tile.type;
+				world.areas[field.id] = field;
+				world.areas['totalAmount'] = world.areas['totalAmount'] + 1;
+				world.areas[field.type]++;
+				tile.field = field.id;
+			}
 			i++;
-			//TODO borders
 		}
 	}
 }
