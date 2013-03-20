@@ -1,7 +1,7 @@
 // uses web workers to generate world
 function importResources(){
 	importScripts("res/malenames-french.js","res/femalenames-french.js","res/surnames-french.js");
-	importScripts("primitives.js", "people.js", "../../scripts/mersenne-random.js","../../scripts/json.js", "aStar.js"); //also aStar, history, events, and whatever else I'd like to share between main program and this
+	importScripts("history.js", "primitives.js", "people.js", "../../scripts/mersenne-random.js","../../scripts/json.js", "aStar.js"); //also aStar, history, events, and whatever else I'd like to share between main program and this
 }
 
 onmessage = function(event){
@@ -96,11 +96,9 @@ function craftNewWorld(times){
 	generateRoads();
 	t2 = new Date();
 	timeDiff(t2,t1,"Road generation took : ");
-	var player = allPeople[random(0,allPeople.length-1)]; //new generatePerson(); //needs areas to pick a city at random.
-	createDynasty(player); //move these to newGame()
-	sendMessage("\nWorld generation done!");
-	var tEnd = new Date();
-	timeDiff(tEnd,tStart,"World generation took : ");
+	t1 = new Date();
+	sendMessage("\nGenerating cultures");
+	
 	world.areas = areas;
 	world.rivers = rivers;
 	world.roads = roads;
@@ -108,7 +106,20 @@ function craftNewWorld(times){
 	world.people = allPeople;
 	world.population = people;
 	world.cities = cities; 
-//	world.cultures = cultures;
+	cultures = [];
+	culture = 0;
+	generateCultures();
+	t2 = new Date();
+	timeDiff(t2,t1,"Culture generation took : ");
+	sendMessage("\nGenerating history");
+	
+    generateHistory(100);
+	var player = allPeople[random(0,allPeople.length-1)]; //new generatePerson(); //needs areas to pick a city at random.
+	createDynasty(player); //move these to newGame()
+	sendMessage("\nWorld generation done!");
+	var tEnd = new Date();
+	timeDiff(tEnd,tStart,"World generation took : ");
+	world.cultures = cultures;
 	postMessage(JSON.stringify(world)); 
 }
 
@@ -772,19 +783,28 @@ function generateRoadTo(start,goal,maxLength){
 	heuristicFunc = heuristic;
 	returnFunc = function(end){
 		var path = [end];
+		var connections = [];
+		var lastConnection = -1;
 		while(end.cameFrom !== undefined){
 			path.push(end.cameFrom);
+			if(end.road !== undefined && end.road){
+				if(end.roadIndex != lastConnection && member(end.roadIndex, connections) ==  -1){
+					connections.push(end.roadIndex);
+					roads[end.roadIndex].connections.push(roads.length);
+					lastConnection = end.roadIndex;
+				}
+			}
 			end.road = true;
 			end.roadIndex = roads.length;
 			end = end.cameFrom;
 			if(end == start) break;
 		}
-		var road = {"path" : path, "from" : start, "to" : goal};
+		var road = {"id":roads.length, "connections" : connections,  "path" : path, "from" : areas[start.field], "to" : areas[goal.field]};
 		roads.push(road);
-		return path;
+		return road;
 	};
 	failFunc = function(){return null;};
-	return heapAStar(start,goal,goalCond,distanceFunc,heuristicFunc,returnFunc,failFunc,maxLength);
+	return heapAStar(start,goal,goalCond,distanceFunc,heuristicFunc,returnFunc,failFunc,maxLength); //returns returnFunc(end);
 }
 
 function generateRoads(){
@@ -792,17 +812,24 @@ function generateRoads(){
 
 	var i;
 	var abandon = 0;
+	for(i = 0; i < cities.length; i++) areas[cities[i]].roads = [];
 	for(i = 0; i < cities.length-1; i++){
-		var start = lookUpCoord(areas[cities[i]].tiles[0]);
+		var startCity = areas[cities[i]];
+		var goalCity = areas[cities[(i + 1) % cities.length]];
+		var start = lookUpCoord(startCity.tiles[0]);
 		var x1 = start.globalPosition.x;
 		var y1 = start.globalPosition.y;
-		var goal = lookUpCoord(areas[cities[(i + 1) % cities.length]].tiles[0]);
+		var goal = lookUpCoord(goalCity.tiles[0]);
 		var x2 = goal.globalPosition.x;
 		var y2 = goal.globalPosition.y;
-		
 		sendMessage("    Working on road " + i + " from ("+x1+","+y1+") to ("+x2+","+y2+")");
-		if(heuristic(start,goal) < 100)
-			generateRoadTo(start,goal,1000);
+		if(heuristic(start,goal) < 100){
+			var road = generateRoadTo(start,goal,1000);
+			if(road != []){
+				startCity.roads.push(road.id);
+				goalCity.roads.push(road.id);
+			}
+		}
 		else{
 			sendMessage("    Abandoned work on road, as it was deemed too expensive");
 			abandon++;

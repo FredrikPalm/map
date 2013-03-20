@@ -2,7 +2,7 @@ var eventsID = 0;
 
 function histEvent(chance, effect, args){
 	this.id = eventsID++ - 1;
-	this.chance = chance;
+	this.baseChance = chance;
 	this.currChance = chance;
 	this.inEffect = false;
 	this.effect = effect;
@@ -54,13 +54,102 @@ function Evaluator(field, city, comparison, cutOff){
 	return a;
 }
 
-function countPopulation(city){
-	console.log("countPopulation shouldn't be called");
-	var pop = 0;
-	for(var i = 0; i < city.tiles.length; i++){
-		if(city.tiles[i].population !== undefined) pop += city.tiles[i].population;
+function generateCultures(){
+	cultures = [];
+	analyseCities();
+	cultures = findCultures(Math.round(world.cities.length / 5));
+}
+
+function findCultures(amount){
+	var clusterCentra = [];
+	var culture = 0;
+	var clusters = [];
+	var hasChanged = true;
+	var cities = world.cities;
+	var areas = world.areas;
+	for(var i = 0; i < cities.length; i++){
+		var city = areas[cities[i]];
+		if(i % amount == 0){
+			clusterCentra.push(city.center);
+			clusters.push([]);
+		}
+		city.cultureID = -1;
 	}
-	return pop;
+	
+	while(hasChanged){
+		hasChanged = false;
+		for(var i = 0; i < cities.length; i++){
+			var minDistance = Infinity;
+			var cluster = 0;
+			var city = areas[cities[i]];
+			for(var k = 0; k < clusterCentra.length; k++){
+				var distance = euclideanDistance(clusterCentra[k], city.center);
+				if(distance < minDistance){
+					minDistance = distance;
+					cluster = k;
+				}
+			}
+			if(city.cultureID != culture){
+				hasChanged = true;
+				clusters[cluster].push(city);
+				if(city.cultureID !== -1){
+					var index = member(city, clusters[city.cultureID]); //temporary solution
+					cultures[city.cultureID].splice(index, 1); 
+				}
+				city.cultureID = culture;
+			}	
+		}
+		if(!hasChanged) break;
+		for(var i  = 0; i < clusters.length; i++){
+			var xTot = 0;
+			var yTot = 0;
+				
+			for(var k = 0; k < clusters[i].length; k++){
+				var x = clusters[i][k].center.x;
+				var y = clusters[i][k].center.y;
+				xTot += x;
+				yTot += y;				
+			}
+			var xMean = xTot / clusters[i].length;	
+			var yMean = yTot / clusters[i].length;
+			clusterCentra[i] = {"x":xMean,"y":yMean};
+		}
+	}
+	return clusters;
+}
+
+function analyseCities(){
+	//adds population
+	//adds center
+	//adds radius
+	for(var i = 0; i < world.cities.length; i++){
+		var city = world.areas[world.cities[i]];
+		var pop = 0;
+		var xTot = 0;
+		var yTot = 0;
+		var xMin = Infinity;
+		var xMax = -1;
+		var yMin = Infinity;
+		var yMax = -1;
+		for(var k = 0; k < city.tiles.length; k++){
+			var tile = lookUpCoord(city.tiles[k]);
+			if(tile.population !== undefined) pop += tile.population;
+			var x = city.tiles[k].x;
+			var y = city.tiles[k].y;
+			xTot += x;
+			yTot += y;
+			if(x < xMin){ xMin = x; }
+			if(x > xMax){ xMax = x; }
+			if(y < yMin){ yMin = y; }
+			if(y > xMax){ yMax = y; }
+		}
+		city.population = pop;
+		var xMean = xTot / city.tiles.length;
+		var yMean = yTot / city.tiles.length;
+		var radius = Math.max ((xMean - xMin), (yMean - yMin), (xMax - xMean), (yMax - yMean));
+		city.center = {"x":xMean,"y":yMean};
+		city.radius = radius;
+	}
 }
 
 function makeEffectFunction(city,culture){
@@ -123,31 +212,43 @@ function makeEventEffect(city,culture){
 		for(var i = 0; i < effects.length; i++){
 			var a;
 			if(effects[i][0].indexOf("city") == 0){
-
+				print("shouldn't happen");
 			}
 			if(effects[i][0].indexOf(".") !== -1){
+				print("shouldn't happen");
 				var a = parseDotNotation(effects[i][0]);
+				effects[i][0] = a[0]; //world.tiles.10.10
+				effects[i][2] = effects[i][1]; //"*0.9"
+				effects[i][1] = a[1]; //"population"]
 			}
 			else{ // if the string is just "Anarchy", assume city.h.Anarchy is meant
 				a = [city.h, effects[i][0]];
+				var name = effects[i][0];
+				var value = effects[i][1];
+				effects[i][0] = city; //{}?	
+				effects[i][2] = value; //"*0.9"
+				effects[i][1] = "currChance"; //Anarchy
+				effects[i][3] = ["h", name];
 			}
-			effects[i][0] = a[0]; //world.tiles.10.10
-			effects[i][2] = effects[i][1]; //"*0.9"
-			effects[i][1] = a[1]; //"population"
 		}
 		return function(){
 			$.each(effects, function(i,val){
-				change(val[0], val[1],val[2]);
+				//      item, field, change
+				change(val[0],val[1],val[2], val[3]);
 			});
 			return true;
 		};
 	}
 }
 
-function change(item, field, str){
-	//field == world.tiles[10][10].population
+function change(item, field, str, fields){
 	var operator = str[0];
 	var value = parseInt(str.substr(1),10);
+	if(fields !== undefined){
+		for(var i = 0; i < fields.length; i++){
+			item = item[fields[i]];
+		}	
+	}
 	if(operator == "="){
 		item[field] = value;
 	}
@@ -169,21 +270,34 @@ function change(item, field, str){
 		}
 	}
 	else{
-		console.log("err: " + operator + " " + value);
+		print("err: " + operator + " " + value);
 	}
 }
 
 function testEffects(){
 	var m = makeEventEffect();
-	console.log(world.tiles[10][10].population);
+	print(world.tiles[10][10].population);
 	var t = m(["world.tiles.10.10.population", "=999"],["Anarchy"]);
 	var t2 = m(["world.tiles.10.10.population", "+1"]);
 	var t3 = m(["world.tiles.10.10.selected", "=true"]);
 	t();
 	t2();
-	console.log(world.tiles[10][10].population);
+	print(world.tiles[10][10].population);
 	t3();
-	console.log(world.tiles[10][10].selected);
+	print(world.tiles[10][10].selected);
+}
+
+function findOnGoingEvents(){
+	var areas = world.areas; var cities = world.cities;
+	for(var i = 0; i < cities.length; i++){
+		var city = areas[cities[i]];
+		$.each(city.h, function(n,val){
+			if(val.inEffect){
+				var id = val.lastID;
+				print("H: Found event " + n + " in " + cities[i] + " that started " + city.h[n].lastStart);
+			}
+		});
+	}
 }
 
 var histEvents = function(culture, city)
@@ -203,8 +317,10 @@ var histEvents = function(culture, city)
 	this.GreatArtist = new histEvent(5, function(culture,city){},0),
 	this.GreatLeader = new histEvent(5, function(culture,city){},0),
 	this.GreatEngineer = new histEvent(5, function(culture,city){},0),
-	this.GreatPhilosopher = new histEvent(5, function(culture,city){},0),
+	this.GreatPhilosopher = new histEvent(30, m(["GreatPhilosopher","+500"],["Democracy", ">10"],["Dictatorship","-3"],["CivilWar","-2"],["GreatArtist","+3"])),
 	this.GreatWarrior = new histEvent(5, function(culture,city){},0),
+	this.HappensOnce = new histEvent(5, m(["HappensOnce", "=1000"],["HappensOften", "=0"])),
+	this.HappensOften = new histEvent(100, function(){});
 	this.HeldOffByX = new histEvent(0, function(culture,city,arg1){},1),
 	this.HeldOffX = new histEvent(0, function(culture,city,arg1){},1), //       if: turmoil and neither is strong
 	this.InConflictWithX = new histEvent(2, function(culture,city,arg1){},1),
@@ -294,7 +410,7 @@ var settlementNames = [
 ];
 
 function generateHistory(years){
-	console.log("generating history over " +years + " years");
+	print("generating history over " +years + " years");
 	var t1 = new Date();
 	initHistory();
 	var year = -1;
@@ -308,16 +424,16 @@ function generateHistory(years){
 				// then gather facts
 				// then new effects
 
-				for (var n = 0; n < city.h.length; n++){
-					if(city.h[n].inEffect)
-						city.h[n].effect(cultures[i],city);
-				}
+				$.each(city.h, function(n,val){
+					if(val.inEffect)
+						val.effect(cultures[i],city);
+				});
 
-				for (var n = 0; n < cultures[i][k].facts.length; n++){
-					if(city.facts[n].inEffect){
-						city.facts[n].effect(cultures[i],city);
+				$.each(city.facts, function(n,val){
+					if(val.inEffect){
+						val.effect(cultures[i],city);
 					}
-				}
+				});
 
 				$.each(city.h, function(name,val){
 					var r = random(0,1000);
@@ -326,12 +442,14 @@ function generateHistory(years){
 						if(!currEvent.inEffect){
 							var id = idCounter++;
 							currEvent.lastID = id;
-						//	console.log("###CREATING HISTORY!! " + name + " at " + i + " " + k + " " + year);
+							currEvent.lastStart = year;
+						//	print("###CREATING HISTORY!! " + name + " at " + i + " " + k + " " + year);
 							if(city.history[year] == undefined){
 								city.history[year] = {"eventsStart":[], "eventsEnd":[]};
 							}
 							city.history[year].eventsStart.push({"event":name, "id":id});
 						}
+						print("Event continues: " + name + " in " + city.id);
 						currEvent.inEffect = true; currEvent.effect(cultures[i],city);
 					}
 					else if(currEvent.inEffect){
@@ -339,13 +457,13 @@ function generateHistory(years){
 						if(city.history[year] == undefined){
 							city.history[year] = {"eventsStart":[], "eventsEnd":[]};
 						}
-						city.history[year].eventsEnd.push({"event":name, "id":currEvent.lastID});
+						city.history[year].eventsEnd.push({"event":name, "id":currEvent.lastID, "started":currEvent.lastStart, "lasted":year-currEvent.lastStart});
 					}
-					val.chance = val.baseChance;
+					val.currChance = val.baseChance;
 				});
 			}
 		}
 	}
 	var t2 = new Date();
-	timeDiff(t2,t1, "Generating history for " + cities.length + " cities over " + years + " years, took: ");
+	timeDiff(t2,t1, "Generating history for " + world.cities.length + " cities over " + years + " years, took: ");
 }

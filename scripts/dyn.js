@@ -259,7 +259,6 @@ function updateTileInfo(tile)
 	if(tile.community != null){
 		var city = tile.field;
 		city = world.areas[city];
-		city = generateCity(city);
 		population = city.population;
 		value = city.value;
 		id = "City " + tile.field;
