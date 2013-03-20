@@ -1,0 +1,305 @@
+@import "http://frkp.lgnas.com/scripts/jquery.svg.css";
+*{
+width:100%;
+/*height:100%;*/
+color:white;
+}
+
+img{
+	height:100%;
+	width:100%;
+}
+
+body{
+	position:absolute;
+	margin:0px;
+	width:100%;
+	height:100%;
+	background-color:#000;
+	font-family:aparajita, sans-serif;
+	font-size:18px;
+}
+
+.selectable{
+	-webkit-transition: all 0.5s ease-in-out;
+    -moz-transition: all 0.5s ease-in-out;
+    -o-transition: all 0.5s ease-in-out;
+}
+.selectable:hover{
+	font-weight:bold;
+}
+
+#MenuHeaders{
+	font-size:25px;
+	display:inline;
+	position:absolute;
+	z-index:4;
+	max-width:48%;
+	width:48%;
+	/*left:0px;
+	bottom:0px;*/
+	position:absolute;
+	/*opacity:0.5;*/
+	height:35px;
+
+	z-index:6;
+	/*margin: 0px 0px 10px 5px;*/
+	/*background-color:#CCC;*/
+	background-image: linear-gradient(bottom, rgb(204,204,204) 0%, rgba(0,0,0,0.7) 100%);
+	background-image: -o-linear-gradient(bottom, rgb(204,204,204) 0%, rgba(0,0,0,0.7) 100%);
+	background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 0%, rgba(0,0,0,0.7) 100%);
+	background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 0%, rgba(0,0,0,0.7) 100%);
+	background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 0%, rgba(0,0,0,0.7) 100%);
+
+	background-image: -webkit-gradient(
+	linear,
+	left bottom,
+	left top,
+	color-stop(0, rgba(204,204,204,0.7)),
+	color-stop(1, rgba(0,0,0,0.7))
+	);
+}
+
+.menues{
+background-color:rgba(80,80,80,0.7);
+}
+.menues div{
+/*height:10%;*/
+}
+
+#MenuDisplay
+{
+	font:25px aparajita, sans-serif;
+	color:#FFF;
+	display:inline;
+	position:absolute;
+	z-index:4;
+	max-width:42%;
+
+	margin:0px;
+	width:13%;
+	background-color:rgba(80,80,80,0.7);
+	margin-top:35px;
+	font-size:18px;
+	height:40%;
+	z-index:5;
+	overflow:hidden;
+	text-align: center;
+	-webkit-transition: all 0.5s ease-in-out;
+    -moz-transition: all 0.5s ease-in-out;
+    -o-transition: all 0.5s ease-in-out;
+}
+#MenuDisplay.hidden{
+	top:-1000px;
+	display:inline !important;
+}
+#MenuDisplay > div
+{
+	padding-top:10px;
+	height:20px;
+}
+#EventsNr
+{
+	font-size:20px;
+	color:#F74343;
+	margin-left:1px;
+	
+}
+
+.close{
+position:absolute;
+bottom:10px;
+}
+
+#MenuHeaders .header
+{
+	display: inline-block;
+	display: -moz-inline-box; 
+    *display: inline; /* For IE7 */
+    zoom: 1; /* Trigger hasLayout */
+	padding-top:5px;
+    width: 19%;
+	height:100%;
+    overflow:hidden;
+	text-align: center;
+}
+
+#MenuHeaders .header:hover
+{
+	overflow:visible;
+}
+#res:hover{
+	font-weight:bold;
+}
+
+#tileInfo
+{
+	display:none;
+	position:absolute;
+	left:250px;
+	top:300px; 
+	background-color:rgba(80,80,80,0.8);
+	z-index:10;
+	height:300px;
+	width:200px;	
+	border: thin solid white;
+}
+#tileInfo .type
+{
+	text-align:center;
+	font-size:20px;
+	color:#FFF;
+}
+#tileInfo .resource
+{
+	height:45px;
+	width:48px;
+	background-color:rgba(204,204,204,0.8);
+	border: thin solid #EEE;
+	float:left;
+	text-align:center;
+}
+#tileInfo > *
+{
+	height:10%;
+}
+.event{
+	border-bottom:thin solid white;
+	height:100px !important; 
+	overflow:hidden;
+}
+.event:hover{
+ /*some indication that the text is clickable*/
+}
+
+#FamilyTree div{
+	/*height:10%;*/
+}
+
+#eventViewer,#FamilyTree{
+	/*should be centered*/
+	width:70%;
+	height:70%;
+	position:absolute;
+	border:1px solid white;
+	padding:9px;
+	background-color:rgba(80,80,80,0.7);
+	z-index:10;
+	font-size:24px;
+	overflow:auto;
+}
+.characterTraits{
+	height:70%;
+}	
+.characterTrait{
+	height:20px;
+}
+.hidden{
+	display:none !important;
+}
+#eventViewer > *
+{
+	height:auto;
+}
+#Loading{
+	z-index:10;
+	position:absolute;
+	height:50%;
+	font-size: 29px;
+	top: 33%;
+	text-align: center;
+}
+#progress{
+	z-index:10;
+	font-size: 20px;
+	position:absolute;
+	opacity:0.5;
+}
+#newPlayer {
+	/*border: 1px solid #484;*/ 
+	height:100%; 
+	width:100%; 
+	/*margin:5px 5px 0px 5px;*/ 
+	position:absolute; 
+	z-index:2;}
+
+.smallSquare{
+	width:75px;
+	height:75px;
+	margin:5px;
+}
+#canvas{
+	z-index:5;
+	position:absolute;
+}
+#overlay
+{
+	z-index:6;
+	position:absolute;
+}
+#seasonOverlay
+{
+	z-index:7;
+	position:absolute;
+}
+
+#Title{
+	z-index:8;
+	position:absolute;
+	top:10%;
+	left:10%;
+	font-size:132px;
+	color:rgba(255,255,255,0.8);
+	background-color:rgba(0,0,0,0.2);
+	width:33%;
+	height:19%;
+	text-align:center;
+}
+
+#NewGameMenu{
+	z-index:8;
+	position:absolute;
+	background-color:rgba(0,0,0,0.4);
+	bottom:0;
+	right:0;
+	padding-top:10px;
+	height:52%;
+	width:25%;
+	overflow:hidden;
+}
+
+#NewGameMenu *{
+	font-size:23px;
+	height:12%;
+	text-align:center;
+}
+#NewGameMenu span{
+	width:30%;
+	margin-left:5px;
+	margin-right:5px;
+	margin-bottom:10px;
+}
+input.error{
+	color:red !important;
+}
+#NewGameMenu input{
+	height:10%;
+	font-size:18px;
+	background-color:rgba(0,0,0,0.2);
+	color:white;
+}
+
+.selected{
+ background-color:#FF0;
+}
+
+.grass{
+ background-color:#0C3;	
+}
+.water{
+ background-color:#03C;	
+}
+.tile{
+ position:absolute;	
+}
+

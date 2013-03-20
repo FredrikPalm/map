@@ -1,0 +1,95 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="user-scalable=no" />
+<link id="layout" href="layout/layout.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="scripts/res/malenames-french.js"></script>
+<script type="text/javascript" src="scripts/res/femalenames-french.js"></script>
+<script type="text/javascript" src="scripts/res/surnames-french.js"></script>
+<script type="text/javascript" src="../scripts/jquery.js"></script>
+<script type="text/javascript" src="../scripts/jquery-ui.js"></script>
+<script type="text/javascript" src="../scripts/processing-1.4.1.min.js"></script>
+<script type="text/javascript" src="../scripts/jquery.xdomainajax.js"></script>
+<!---<script type="text/javascript" src="../scripts/jquery.mousewheel.js"</script>
+<script type="text/javascript" src="../scripts/underscore.min.js"></script>
+<script type="text/javascript" src="../scripts/parallel.min.js"></script>
+
+<script type="text/javascript" src="../scripts/alt-webgl-utils.js"></script>
+<script type="text/javascript" src="../scripts/webgl-debug.js"></script>
+-->
+<script type="text/javascript" src="../scripts/json.js"></script>
+<script type="text/javascript" src="../scripts/mersenne-random.js"></script>
+<script type="text/javascript" src="scripts/primitives.js"></script>
+<script type="text/javascript" src="scripts/dyn.js"></script>
+<script type="text/javascript" src="scripts/people.js"></script>
+<script type="text/javascript" src="scripts/events.js"></script>
+<script type="text/javascript" src="scripts/io.js"></script>
+<script type="text/javascript" src="scripts/dynasty.js"></script>
+<script type="text/javascript" src="scripts/history.js"></script>
+<script type="text/javascript" src="scripts/renderer.js"></script>
+<script type="text/javascript" src="scripts/aStar.js"></script>
+<script id="2d-vertex-shader" type="x-shader/x-vertex">
+	attribute vec2 a_position;
+
+	uniform vec2 u_resolution;
+
+	void main() {
+	   // convert the rectangle from pixels to 0.0 to 1.0
+	   vec2 zeroToOne = a_position / u_resolution;
+
+	   // convert from 0->1 to 0->2
+	   vec2 zeroToTwo = zeroToOne * 2.0;
+
+	   // convert from 0->2 to -1->+1 (clipspace)
+	   vec2 clipSpace = zeroToTwo - 1.0;
+
+	   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+	}
+</script>
+<script id="2d-fragment-shader" type="x-shader/x-fragment">
+	precision mediump float;
+
+	uniform vec4 u_color;
+
+	void main() {
+	   gl_FragColor = u_color;
+	}
+</script>
+<title>Dyn</title>
+</head>
+
+
+<body>
+<div id="Title" class="init">DYN</div>
+<div id="Loading"><div id="loading">Loading<span id="loadingDots"></span><div id="progress"></div></div></div>
+<div id="NewGameMenu" class="init"></div>
+<!--<span id="Menu" class="window">--->
+<div id="MenuHeaders" class="window">
+<span id="EventsHeader" menuType="events" class="menu header events">Events<span id="EventsNr" class="menu events">11</span></span>
+<!--<span id="FilterHeader" menuType="filter" class="menu header filter">Filter</span>-->
+<span id="DynastyHeader" menuType="dynasty" class="menu header dynasty">Dynasty</span>
+<span id="DateHeader" menuType="stats" class="menu header date">Year: Season</span>
+<span id="TurnHeader" class="menu header turn">Next Turn</span>
+<span id="OptionsHeader" menuType="options" class="menu header options"><span id="MainMenuHeader" class="menu mainmenu">Options</span></span>
+</div>
+<div id="MenuDisplay" class="menu display window"><div>Export Game</div><div id="res">Set Tile Resolution</div><div>Reload World</div>
+<div class="close">close</div>
+</div>
+<!--</span>-->
+<!--<div id="Player" class="window"></div>-->
+<div id="tileInfo">
+<div id="tileType" class="type">Grass Tile</div>
+<span id="tileValue"></span>
+<span id="tilePopulation"></span>
+<div id="tileResources"></div>
+<div id="tileActions">
+ <div>Construct Factory</div>
+</div>
+<div class="close">close</div>
+</div>
+<div id="newPlayer" class="window"></div>
+<div id="eventViewer" class="window"></div>
+<div id="temp" class="hidden"></div>
+<div id="FamilyTree"></div>
+</body>
+</html>
