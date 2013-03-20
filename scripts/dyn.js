@@ -594,7 +594,7 @@ function tileClicked(worldTile)
 	//tField = areas[worldTile.field];
 	var tField = worldTile.field;
 	changeOverlayCanvas(function(x,y){
-		if(world.tiles[x][y].field == tField && world.tiles[x][y].borders != null){
+		if(world.tiles[x][y].field == tField && world.tiles[x][y].borders != null && world.tiles[x][y].borders.length > 0){
 			return 'rgba(10,10,40,0.3)';
 		}
 		else return 'rgba(0,0,0,0)';

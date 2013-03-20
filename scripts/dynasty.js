@@ -68,69 +68,6 @@ function cultureTest(){
 	console.log(cities.length + " => " + cultures);
 }
 
-function generateCultures(){
-	cultures = [];
-	analyseCities();
-	cultures = findCultures(Math.round(world.cities.length / 5));
-}
-
-function findCultures(amount){
-	var clusterCentra = [];
-	var clusters = [];
-	var hasChanged = true;
-	var cities = world.cities;
-	var areas = world.areas;
-	for(var i = 0; i < cities.length; i++){
-		var city = areas[cities[i]];
-		if(i % amount == 0){
-			clusterCentra.push(city.center);
-			clusters.push([]);
-		}
-		city.cultureID = -1;
-	}
-	
-	while(hasChanged){
-		hasChanged = false;
-		for(var i = 0; i < cities.length; i++){
-			var minDistance = Infinity;
-			var cluster = 0;
-			var city = areas[cities[i]];
-			for(var k = 0; k < clusterCentra.length; k++){
-				var distance = euclideanDistance(clusterCentra[k], city.center);
-				if(distance < minDistance){
-					minDistance = distance;
-					cluster = k;
-				}
-			}
-			if(city.cultureID != culture){
-				hasChanged = true;
-				clusters[cluster].push(city);
-				if(city.cultureID !== -1){
-					var index = member(city, clusters[city.cultureID]); //temporary solution
-					cultures[city.cultureID].splice(index, 1); 
-				}
-				city.cultureID = culture;
-			}	
-		}
-		if(!hasChanged) break;
-		for(var i  = 0; i < clusters.length; i++){
-			var xTot = 0;
-			var yTot = 0;
-				
-			for(var k = 0; k < clusters[i].length; k++){
-				var x = clusters[i][k].center.x;
-				var y = clusters[i][k].center.y;
-				xTot += x;
-				yTot += y;				
-			}
-			var xMean = xTot / clusters[i].length;	
-			var yMean = yTot / clusters[i].length;
-			clusterCentra[i] = {"x":xMean,"y":yMean};
-		}
-	}
-	return clusters;
-}
-
 function selectCulture(culture){
 	for(var x = 0; x < world.tiles.length; x++)
 		for(var y = 0; y < world.tiles[0].length; y++){
@@ -142,40 +79,6 @@ function selectCulture(culture){
 		}
 	}
 	repaint2(world);
-}
-
-function analyseCities(){
-	//adds population
-	//adds center
-	//adds radius
-	for(var i = 0; i < world.cities.length; i++){
-		var city = world.areas[world.cities[i]];
-		var pop = 0;
-		var xTot = 0;
-		var yTot = 0;
-		var xMin = Infinity;
-		var xMax = -1;
-		var yMin = Infinity;
-		var yMax = -1;
-		for(var k = 0; k < city.tiles.length; k++){
-			var tile = lookUpCoord(city.tiles[k]);
-			if(tile.population !== undefined) pop += tile.population;
-			var x = city.tiles[k].x;
-			var y = city.tiles[k].y;
-			xTot += x;
-			yTot += y;
-			if(x < xMin){ xMin = x; }
-			if(x > xMax){ xMax = x; }
-			if(y < yMin){ yMin = y; }
-			if(y > xMax){ yMax = y; }
-		}
-		city.population = pop;
-		var xMean = xTot / city.tiles.length;
-		var yMean = yTot / city.tiles.length;
-		var radius = Math.max ((xMean - xMin), (yMean - yMin), (xMax - xMean), (yMax - yMean));
-		city.center = {"x":xMean,"y":yMean};
-		city.radius = radius;
-	}
 }
 
 function drawCultures(start,end){
