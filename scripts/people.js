@@ -346,6 +346,7 @@ function changeCitySize(city, amount){
 		while(amount-- && i < candidates.length){
 			var tile = candidates[i];
 			tile.type = "settlement";
+			tile.newSettlement = true;
 			//remove tile from old field
 			if(tile.field != undefined){
 				//TODO fix...
@@ -430,6 +431,7 @@ function changeCitySize(city, amount){
 			var tile = candidates[i];
 			removeFromArea(city,tile.globalPosition);
 			tile.type = "grass";
+			tile.ruin = true;
 			tile.field = "?";
 			var alone = true;
 			$.each(tile.neighbours, function(i,val){

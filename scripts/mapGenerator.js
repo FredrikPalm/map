@@ -609,6 +609,7 @@ function checkAreas(worldT){
 		if(keys[i][0] == "a" && areas[keys[i]].type != undefined)
 		{
 			if(areas[keys[i]].type == "settlement"){
+				areas[keys[i]].name = generateRandomPlaceName(areas[keys[i]]);
 				cities.push(keys[i]);
 			}
 		}

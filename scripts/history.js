@@ -56,7 +56,7 @@ function Evaluator(field, city, comparison, cutOff){
 		if(change !== undefined){ 
 			value = change;
 		}
-		return comparison(value / city.population, cutOff);
+		return comparison(value, city, cutOff);
 	};
 	return a;
 }
@@ -96,14 +96,15 @@ function findCultures(amount){
 					cluster = k;
 				}
 			}
-			if(city.cultureID != culture){
+			if(city.cultureID != cluster){
 				hasChanged = true;
 				clusters[cluster].push(city);
 				if(city.cultureID !== -1){
 					var index = member(city, clusters[city.cultureID]); //temporary solution
-					cultures[city.cultureID].splice(index, 1); 
+					if(index != -1)
+						clusters[city.cultureID].splice(index, 1); 
 				}
-				city.cultureID = culture;
+				city.cultureID = cluster;
 			}	
 		}
 		if(!hasChanged) break;
@@ -165,6 +166,7 @@ function analyseCities(){
 		city.population = pop;
 		city.food = food;
 		city.drink = drink;
+		city.density = city.population / city.tiles.length;
 		var xMean = xTot / city.tiles.length;
 		var yMean = yTot / city.tiles.length;
 		var radius = Math.max ((xMean - xMin), (yMean - yMin), (xMax - xMean), (yMax - yMean));
@@ -173,41 +175,27 @@ function analyseCities(){
 	}
 }
 
-function makeEffectFunction(city,culture){
-	// i want to call this function to get a function I can call to get an effect function
-	// var temp = makeEffectFunction(city,culture)
-	// var effect = temp([["greatPerson", 5]["greatSolder",-5]])
-	// effect() -> city.h.greatPerson.currChange += 5; 
-	return function(){
-		var effects = arguments;
-		return function(){
-			$.each(effects, function(i,val){
-				var name = val[0];
-				var increase = val[1];
-				city.h[name].currChance += increase;
-			});
-			return true;
-		};
-	};
-}
-
 function histFacts(culture, city)
 {	if(city.population === undefined){
 		city.population = countPopulation(city);
 	}	
 
-	var less = function(a,b){return a < b;};
-	var more = function(a,b){return a > b;};
-	var same = function(a,b){return Math.abs(a-b) < 1;};
+	var lessP = function(a,city,b){return a/city.population < b;};
+	var moreP = function(a,city,b){return a/city.population > b;};
+	var sameP = function(a,city,b){return Math.abs(a/city.population-b) < 1;};
+	var less = function(a,city,b){return a < b;};
+	var more = function(a,city,b){return a > b;};
+	var same = function(a,city,b){return Math.abs(a-b) < 1;};
 	var m = makeEventEffect(city,culture);
 	//								  returns false if one-shot
 	/* variable, 	                 evaluator,                        effect,   
 	Ab=Abundance, La = Lack						
 												                  //use +-Infinity to set to 0 or 1000                          */
-	this.AbFood = new histFact(Evaluator("food", city, more, 1), m(["BoomingPopulation", "+2"], ["Rebellion", "-2"])),
-	this.LaFood = new histFact(Evaluator("food", city, less, 0.5), m(["Rebellion", "+2"])),
-	this.AbIron = new histFact(Evaluator("iron", city, more, 0.02), m(["MilitaryMight", "+1"])),
-	this.LaSpace = new histFact(Evaluator("density", city, less, 0.001), m());
+	this.AbFood = new histFact(Evaluator("food", city, moreP, 1), m(["BoomingPopulation", "+2"], ["Rebellion", "-2"])),
+	this.LaFood = new histFact(Evaluator("food", city, lessP, 0.5), m(["Rebellion", "+2"])),
+	this.AbIron = new histFact(Evaluator("iron", city, moreP, 0.02), m(["MilitaryMight", "+1"])),
+	this.LaSpace = new histFact(Evaluator("density", city, more, 1000), m(["Growing", "+30"])),
+	this.AbSpace = new histFact(Evaluator("density", city, less, 100), m(["Growing", "=0"]))
 }
 
 
@@ -286,6 +274,10 @@ function change(item, field, str, fields){
 	else if(operator == "/"){
 		item[field] /= value;
 	}
+	else if(operator == "!"){ //special..
+		item["baseChance"] = value;
+		item["currChance"] = value;
+	}
 	else if(operator == ">"){
 		if(item[field] !== 0){
 			item[field] += value;
@@ -332,7 +324,7 @@ var histEvents = function(culture, city)
 	var m = makeEventEffect(city,culture);
 	this.Anarchy = new histEvent(1, m(["Anarchy","+50"],["GreatLeader","=0"],["CivilWar","+5"])),
 	this.Authoritarian = new histEvent(4, m(["Democracy", "=0"],["Dictatorship","+3"],["CivilWar","-2"],["GreatArtist","-3"])),
-	this.BoomingPopulation = new histEvent(0, function(culture,city){city.population += random(Math.floor(city.population / 10));}),
+	this.BoomingPopulation = new histEvent(0, function(culture,city){changeCityPopulation(city, Math.round(city.population / random(5,10)));}),
 	this.CivilWar = new histEvent(1, function(culture,city,arg1){ }, 1),
 	this.ConqueredByX = new histEvent(0,function(culture,city,arg1){}, 1),
 	this.ConqueredX = new histEvent(0, function(culture,city,arg1){}, 1),
@@ -343,11 +335,9 @@ var histEvents = function(culture, city)
 	this.GreatArtist = new histEvent(5, function(culture,city){},0),
 	this.GreatLeader = new histEvent(5, function(culture,city){},0),
 	this.GreatEngineer = new histEvent(5, function(culture,city){},0),
-	this.GreatPhilosopher = new histEvent(30, m(["GreatPhilosopher","+500"],["Democracy", ">10"],["Dictatorship","-3"],["CivilWar","-2"],["GreatArtist","+3"])),
+	this.GreatPhilosopher = new histEvent(30, m(["GreatPhilosopher","+990"],["Democracy", ">10"],["Dictatorship","-3"],["CivilWar","-2"],["GreatArtist","+3"])),
 	this.GreatWarrior = new histEvent(5, function(culture,city){},0);
-	var mH = m(["HappensOnce", "=1000"],["HappensOften", "=100"]);
-	this.HappensOnce = new histEvent(5, function(cu,ci){ci.name = "Test"; mH(cu,ci);}),
-	this.HappensOften = new histEvent(0, function(){});
+	this.Growing = new histEvent(0, function(cu,ci){changeCitySize(ci,1);});
 	this.HeldOffByX = new histEvent(0, function(culture,city,arg1){},1),
 	this.HeldOffX = new histEvent(0, function(culture,city,arg1){},1), //       if: turmoil and neither is strong
 	this.InConflictWithX = new histEvent(2, function(culture,city,arg1){},1),
@@ -363,7 +353,7 @@ var histEvents = function(culture, city)
 	this.ReceivedReligionFrom = new histEvent(0,function(culture,city,arg1){},0),
 	this.Religious = new histEvent(6, function(culture,city,arg1){},1), 
 	this.Rich = new histEvent(0, function(culture,city){},0),             // if: high value                                        effect: + democracy, + rebellion, - wisdom
-	this.Starvation = new histEvent(0, function(culture,city){city.population -= random(Math.floor(city.population / 10));}),
+	this.Starvation = new histEvent(0, function(culture,city){changeCityPopulation(city, -Math.round(city.population / random(5,10)));}),
 	this.SpawnedReligion = new histEvent(2, function(culture,city,arg1){},1),
 	this.SpreadReligionTo = new histEvent(0,function(culture,city,arg1){},1),
 	this.Tradesmen = new histEvent(2, function(culture,city,arg1){},1), //         if: has abundance of resource, or lacks one.	   effect: + wealth, + in Turmoil, + Democracy
@@ -392,7 +382,28 @@ function initHistory(){
 		}
 	}
 }
-
+function messWithString(str){
+	//var reg1 = new RegExp("/(an)/gi");
+	var org = str;
+	str = str.replace(/(an)/gi, "eran");
+	//reg1 = new RegExp("/([eèé]nne)/gi");
+	str = str.replace(/([eèé]nne)/gi, "erna");
+	//reg1 = new RegExp("/(an)/gi");
+	str = str.replace(/(al)/gi, "am");
+	//reg1 = new RegExp("/(i)([aoe])/gi");
+	str = str.replace(/(i)([aoe])/gi, "$1s$2");
+	//reg1 = new RegExp("/(de)/gi");
+	str = str.replace(/(de)/gi, "ste");
+	//reg1 = new RegExp("/([iy]n)/gi");
+	str = str.replace(/([iy]n)/gi, "uin");
+	//reg1 = new RegExp("/(de)/gi");
+	str = str.replace(/(de)/gi, "ste");
+	//reg1 = new RegExp("/(l[eia])/gi");
+	str = str.replace(/(l[eia])/gi, "lea");
+	str = str[0].toUpperCase() + str.substr(1);
+	print(org + " -> " + str);
+	return str;
+}
 function generateRandomPlaceName(area){
 	var type = area.type;
 	var baseName = generateFirstName(); // need to mess these up a bit with regexp first
@@ -405,28 +416,26 @@ function generateRandomPlaceName(area){
 		end = lakeNames[random(0,lakeNames.length-1)];
 	}
 	else if(type == "settlement"){
-		//
+		end = settlementNames[random(0,settlementNames.length-1)];
 	}
 	else if(type == "forest"){
 		end = forestNames[random(0,forestNames.length-1)];
 	}
-	return baseName + end;
+	return messWithString(baseName) + end;
 }
 
 var riverNames = [
-	"run", " river", "song"
+	" run", " river"
 ];
 
 var lakeNames = [
-	"pond",
+	" pond",
 	" lake",
-	" sea",
-
-	"vaer",
+	" sea"
 ];
 
 var forestNames = [
-	" forest", "elk",
+	" forest", " woods"
 ];
 
 var mountainNames = [
@@ -434,7 +443,7 @@ var mountainNames = [
 ];
 
 var settlementNames = [
-	" place", "town", " town", " village", " home", " castle"
+	" place", " town", " village", " castle"
 ];
 
 function generateHistory(years){
@@ -493,4 +502,14 @@ function generateHistory(years){
 	}
 	var t2 = new Date();
 	timeDiff(t2,t1, "Generating history for " + world.cities.length + " cities over " + years + " years, took: ");
+}
+
+function nameAreas(){
+	var areas = world.areas;
+	$.each(areas, function(i,area){
+		if(i[0] != "a") return true; //continue
+		if(a.tiles.length > 50 && a.type == "mountain" || a.type == "forest" || a.type == "water"){
+			area.name = generateRandomPlaceName(area);
+		}
+	});
 }

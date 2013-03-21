@@ -24,7 +24,7 @@ var uiHoverEnd;
 var uiDblClick;
 var zoomState = false;
 var zoomLevel = 1;
-var zoomMax = 8;
+var zoomMax = 24;
 var zoomMin = 1;
 var xScroll = 0;
 var yScroll = 0;
@@ -134,7 +134,7 @@ function appendAreas(area1,area2){
 }
 function removeFromArea(area,location){
 	$.each(area.tiles, function(i,val){
-		if(val == undefined) console.log(area.id + " " + i);
+		if(val == undefined) return print(area.id + " " + i);
 		if(val.x == location.x && val.y == location.y){
 			area.tiles.splice(i,1);
 			return false;
@@ -198,4 +198,8 @@ function getUrlVar(afterChar) {
     } else {
         return "";
     }
+}
+
+function rgba(r,g,b,a){
+	return {"r":r,"g":g,"b":b,"a":a};
 }

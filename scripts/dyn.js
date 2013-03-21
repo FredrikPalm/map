@@ -113,8 +113,8 @@ function getColorForTile(tile){
 		}
 		//return "rgb("+r+","+g+","+b+")";	
 	}
-	else if(!!tile.road){
-		r = random(180,250); g = random(180,250); b = random(180,223);
+	else if(tile.road){
+		r = 50; g = 99; b = 51;
 	}
 	else if(type == "grass"){
 		var c = 10 + 2*(tile.depth);
@@ -139,6 +139,11 @@ function getColorForTile(tile){
 			g = Math.round((133+c/2));
 			b = (10+c);
 		}
+
+        if(tile.ruin){
+            r += 30;
+            g -= 30;
+        }
 		//return "rgb("+r+","+g+","+b+")";
 	}
 	else if(type == "mountain"){
@@ -156,17 +161,21 @@ function getColorForTile(tile){
 	}
 	else if(type == "sand"){
 		r = 255;
-		g = 255;
-		b = 9*16;
+		g = 228;
+		b = 156;
 		//return "#FF9";	
 	}
 	else if(type == "river"){
 		//return "rgb(50,50,255)";
 	}
 	else if(type == "settlement"){
-		r = random(80,152);
-		g = 54;
-		b = 51;
+        r = random(80,152);
+        g = 54;
+        b = 51;
+        if(tile.newSettlement){
+            r += 60;
+            g += 60;
+        }	
 	}
 	else{ //forest
 	
@@ -396,7 +405,19 @@ function drawSingleTile(cctx, x, y, fillColor, strokeColor){
 		cctx.fillStyle = "pink";
 		cctx.fillRect(xStart + x%(tileWidth-1), yStart + y%(tileHeight-1),1,1);
 	}*/
+    if(filters && filters.length > 0){
+        var tile = world.tiles[x][y];
+        $.each(filters, function(i,val){
+            var color = val(tile,cctx,xStart,yStart);
+            if(color){
+                cctx.fillStyle = color;
+                cctx.strokeStyle = color;
+                cctx.fillRect(xStart,yStart,tileWidth,tileHeight);
+            }
+        });
+    }
 	if((!fog || inrange) && world.tiles[x][y].type == "settlement" && world.tiles[x][y].borders != null){
+
 		cctx.fillStyle = "gray";
 		for(var i = 0; i < world.tiles[x][y].borders.length; i++){
 			var border = world.tiles[x][y].borders[i];
@@ -1141,6 +1162,7 @@ function init(){
 	scale = tileSize = (iOSDevice) ? 8 : 2;
 	sizeX = Math.floor(w/tileSize);
 	sizeY = Math.floor(h/tileSize);	
+    initFilters();
 	
 		/*Look a URL to see if parameters have been sent*/
 	var showMap = true;
