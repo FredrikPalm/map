@@ -92,6 +92,7 @@ function getColorForTile(tile){
 		return tile.color;
 	}*/
 	var seasonT = seasons[season];
+	
 	if(type == "water"){
 		if(seasonT == "Winter"){
 			r = 180 - (tile.depth-1)*8;
@@ -112,6 +113,15 @@ function getColorForTile(tile){
 		if(b < 100) b = 100;
 		}
 		//return "rgb("+r+","+g+","+b+")";	
+	}
+	else if(type == "settlement"){
+        r = random(80,152);
+        g = 54;
+        b = 51;
+        if(tile.newSettlement){
+            r += 60;
+            g += 60;
+        }	
 	}
 	else if(tile.road){
 		r = 50; g = 99; b = 51;
@@ -139,11 +149,6 @@ function getColorForTile(tile){
 			g = Math.round((133+c/2));
 			b = (10+c);
 		}
-
-        if(tile.ruin){
-            r += 30;
-            g -= 30;
-        }
 		//return "rgb("+r+","+g+","+b+")";
 	}
 	else if(type == "mountain"){
@@ -168,15 +173,6 @@ function getColorForTile(tile){
 	else if(type == "river"){
 		//return "rgb(50,50,255)";
 	}
-	else if(type == "settlement"){
-        r = random(80,152);
-        g = 54;
-        b = 51;
-        if(tile.newSettlement){
-            r += 60;
-            g += 60;
-        }	
-	}
 	else{ //forest
 	
 		var c = 2*tile.depth;
@@ -197,6 +193,12 @@ function getColorForTile(tile){
 		}
 		//return "rgb(0,"+g+","+b+")";////"#063"; //forest
 	} 
+
+	if(tile.ruin){
+        r = 10;
+        g = 10;
+        b = 10;
+    }
 	
 	if(r < 0) r = 0; if(r > 255) r = 255; if(g < 0) g = 0; if(g > 255) g = 255; if(b < 0) b = 0; if(b > 255) b = 255;
 	//tile.color = "rgb("+Math.round(r)+","+Math.round(g)+","+Math.round(b)+")";
@@ -256,57 +258,33 @@ function updateTileInfo(tile)
 	/*If there's a factory constructed, show factory info*/
 	$("#tileInfo .type").text(tile.type[0].toUpperCase() + tile.type.substr(1) + " Tile");
 	$("#tileResources").empty();
-	
-	var keys = Object.keys(tile.resources);
-	for(var i = keys.length;i--;) 
-	{
-		$("#tileResources").append(resourceInfo(tile,keys[i]));
-	}
+	$.each(tile.resources, function(i, resource){
+		$("#tileResources").append(resourceInfo(tile,i));
+	});
+
 	var population = tile.population;
 	var value = tile.value;
 	var id = "ID: " + tile.globalPosition.x + ", " + tile.globalPosition.y;
-	if(tile.community != null){
-		var city = tile.field;
-		city = world.areas[city];
-		population = city.population;
-		value = city.value;
-		id = "City " + tile.field;
+
+	try{	
+		var area = world.areas[tile.field];
+		if(area.type == "settlement"){
+			var city = tile.field;
+			city = world.areas[city];
+			population = city.population;
+			//	value = city.value;
+			id = "City " + tile.field;
+		}	
 	}
+	catch(e){
+		// field undefined or null or something
+	}
+	
 	$("#tileValue").text(id + ". Tile Value: " + value);
 	$("#tilePopulation").text("Tile Population: " + population);
-	/*TODO rethink communities*/
 
-	if(false && tile.community != null)
-	{
-		if(tile.community.globalPosition != undefined){ //tile is part of another tile's community
-			 changeOverlayCanvas(function(x,y){
-			 	if(world.tiles[x][y].community == null) return "rgba(0,0,0,0)";
-			 	if(world.tiles[x][y].community.globalPosition == tile.community.globalPosition 
-			 	|| world.tiles[x][y].globalPosition == tile.community.globalPosition){
-			 		return "rgba(100,200,100,0.6)";
-			 	}
-			 	else{
-			 		return "rgba(0,0,0,0)"
-			 	}
-			 });
-		}
-		else{ //tile is capital of a community
-			/* use tile.community array. No need to redraw entire world */
-			changeOverlayCanvas(function(x,y){
-				
-			 	if(world.tiles[x][y].community == null) return "rgba(0,0,0,0)";
-			 	if(world.tiles[x][y].community.globalPosition == tile.community.globalPosition 
-			 	|| world.tiles[x][y].globalPosition == tile.community.globalPosition){
-			 		return "rgba(100,200,100,0.6)";
-			 	}
-			 	else{
-			 		return "rgba(0,0,0,0)"
-			 	}
-			 });
-		}
-	}
 	$("#tileActions").empty();
-	fillActionMenu(tile);
+	//fillActionMenu(tile);
 	$("#tileInfo").removeClass("hidden").show();
 }
 

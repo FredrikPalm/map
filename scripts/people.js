@@ -206,17 +206,17 @@ function trait(person,trait){
 }
 
 function generateSurName(){
-	var r = random(0,surnames.length);
+	var r = random(0,surnames.length-1);
 	return surnames[r];
 }
 	
 function generateFirstName(gender){
 	 if(gender == "Male"){
-		var r = random(0,maleNames.length);
+		var r = random(0,maleNames.length-1);
 		return maleNames[r];
 	 }
 	 else{
-		var r = random(0,femaleNames.length);
+		var r = random(0,femaleNames.length-1);
 		return femaleNames[r];
 	 }
 }
@@ -319,26 +319,30 @@ function changeCitySize(city, amount){
 			tile.population -= Math.round(Math.min(tile.population, Math.abs(oldDensity - city.density)));
 			if(tile.borders != null)
 				$.each(tile.borders, function(k, val2){
-					if(val2 == "left"){
-						var t = lookUpCoord(r.x - 1, r.y);
-						if(t.type == "grass")
-							candidates.push(t);
+					try{
+						if(val2 == "left"){
+							var t = lookUpCoord(r.x - 1, r.y);
+							if(t.type == "grass")
+								candidates.push(t);
+						}
+						else if(val2 == "below"){
+							var t = lookUpCoord(r.x, r.y + 1);
+							if(t.type == "grass")
+								candidates.push(t);
+						}
+						else if(val2 == "above"){
+							var t = lookUpCoord(r.x, r.y - 1);
+							if(t.type == "grass")
+								candidates.push(t);
+						}
+						else if(val2 == "right"){
+							var t = lookUpCoord(r.x + 1, r.y);
+							if(t.type == "grass")
+								candidates.push(t);
+						}
 					}
-					else if(val2 == "below"){
-						var t = lookUpCoord(r.x, r.y + 1);
-						if(t.type == "grass")
-							candidates.push(t);
+					catch(e){//coordinate was (most likely) out of bounds
 					}
-					else if(val2 == "above"){
-						var t = lookUpCoord(r.x, r.y - 1);
-						if(t.type == "grass")
-							candidates.push(t);
-					}
-					else if(val2 == "right"){
-						var t = lookUpCoord(r.x + 1, r.y);
-						if(t.type == "grass")
-							candidates.push(t);
-					}	
 				});
 		});
 		candidates = candidates.sort(function(a,b){return b.value - a.value;});
@@ -346,6 +350,7 @@ function changeCitySize(city, amount){
 		while(amount-- && i < candidates.length){
 			var tile = candidates[i];
 			tile.type = "settlement";
+			delete(tile.ruin);
 			tile.newSettlement = true;
 			//remove tile from old field
 			if(tile.field != undefined){
@@ -432,6 +437,7 @@ function changeCitySize(city, amount){
 			removeFromArea(city,tile.globalPosition);
 			tile.type = "grass";
 			tile.ruin = true;
+			delete(tile.newSettlement);
 			tile.field = "?";
 			var alone = true;
 			$.each(tile.neighbours, function(i,val){
@@ -497,7 +503,7 @@ function changeCitySize(city, amount){
 					}
 				}
 			});
-			if(tile.field = "?"){
+			if(tile.field == "?"){
 				//isolated
 				var field = new Area();
 				field.id = "a"+world.areas['id']++;

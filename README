@@ -1,0 +1,13 @@
+DYN is a map generator written in javascript. 
+
+Features:
+	Procedurally generated: Lakes, Mountains, Forests, Rivers, Sand
+	Intelligently placed: Cities, Roads, Cultures
+	Dynamically developed: History, and populations
+Planned: 
+	AI driven people
+	Factories and markets
+	Conflicts and warfare
+	Religion and great people
+	Dynasties
+	Player control

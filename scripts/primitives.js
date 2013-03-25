@@ -134,7 +134,7 @@ function appendAreas(area1,area2){
 }
 function removeFromArea(area,location){
 	$.each(area.tiles, function(i,val){
-		if(val == undefined) return print(area.id + " " + i);
+		if(val == undefined){ return true; }
 		if(val.x == location.x && val.y == location.y){
 			area.tiles.splice(i,1);
 			return false;

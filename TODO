@@ -1,0 +1,84 @@
+TO DO LIST for DYN:
+
+UI:
+	Improved adaptability to screen resize
+	Improved control
+	More control options (buttons, ipad controls)
+	New menu (smaller, image buttons)
+	Hideable menu (opaque only when hovered over)
+
+HISTORY:	
+	Generate new history each turn, somehow
+		Either move all history generation to main file, or write a restoreHist function.
+	Write all the effect functions and evaluators
+		Analyse cities more thoroughly
+	Inter-city history	
+	Inter-cultural history
+	Generate opportunities
+		Feed these to AI
+	Duration (more natural starts and ends: a great philosopher can't be active forever).
+	Refer to "actual" global variable year. generateHistory(100) should set it to -100, then year++ to 0.
+	Generate history summarizations in plain text (In year 10 BCE, the city population boomed).
+
+EVENTS:
+	Write basic methods
+	Choices
+	Outcomes
+
+PEOPLE/POPULATION:
+	Change person storage method (use object with p.id, not array).
+	Merge cities
+	Separate as well (flood fill)
+
+AI:	
+	Basic AI to make sure people age and die
+		Includes removing person from lists...
+	Basic AI to make sure people try to survive, but die eventually
+		Use and deplete food and drink - then reset next turn
+	Basic AI to make sure people reproduce
+		Add new person to lists...
+	Basic AI to make sure people produce products
+		Don't magically reset food and drink and other products
+ 
+BUGS/FIXES:
+	ChangeCitySize: area bugs (removeFromArea, border)
+	Rivers don't flow towards nearest water body
+	Roads on settlement tiles should be drawn as settlement tiles.
+	All filters don't seem to work?
+	City names not always visible (drawn beneath other filters or out of view)
+	City names sometimes too obviously french girl names
+	Re-evaluate facts properly (or just always re-evaluate by default).
+
+WEIRD, Low priority bugs:
+	Weird lines at startup
+	
+FUTURE STUFF:
+	Temperature : snow, tundra, desert, jungles
+	Tile history (became settlement year 10)
+	City should form new settlements / colonies
+	Completely revamped population generation
+	Height map
+	Rivers can continue from lakes (mountain -> lake -> ocean)
+	More dynamic maps : Volcanoes, forests growing/shrinking
+	More tile sub-types: Marsh, hill, bushlands, steppe
+		Marsh: no roads or settlements, more water.
+		Hill: (Mountain with depth < 2): settlements possible, more horses
+	More detail when zoomed in: do something to make the world more interesting up close
+	Monsters of some kind : could attack villages
+	Roads are used. Goods are trafficked.
+	Named areas.
+	Meaningful names.
+	Legendary people. Religions. Cults. Proper "culture".
+	Store world somewhere: web app with unlimited storage?
+	Port to C++, OpenGL ?
+
+PROBLEMS TO CONSIDER:
+	Drawing speed: It currently takes way too long to draw the world (even at high zoom levels)
+	Memory: Crashes due to lack of memory. It limits the potential scope of the project
+	Scale: Too high scale to be personal. The big worlds are really nice though...
+	Graphics: Looks terrible up close.
+	Save Files: Too big to store in localStorage (at least without making sacrifices) 
+POTENTIAL SOLUTIONS: 
+	Rewrite as desktop game (solves speed, memory and saves)
+	Add more detail at high zoom (solves scale and graphics)
+	Make concessions regarding world size. Maybe 120.000 tiles is unreasonable.

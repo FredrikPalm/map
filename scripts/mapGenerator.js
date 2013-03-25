@@ -112,8 +112,8 @@ function craftNewWorld(times){
 	t2 = new Date();
 	timeDiff(t2,t1,"Culture generation took : ");
 	sendMessage("\nGenerating history");
-	
-    generateHistory(100);
+	world.cultures = cultures;
+    generateHistory(1000);
 	var player = allPeople[random(0,allPeople.length-1)]; //new generatePerson(); //needs areas to pick a city at random.
 	createDynasty(player); //move these to newGame()
 	sendMessage("\nWorld generation done!");
@@ -495,8 +495,9 @@ function jQ(){
 	this.each = function(a,f){
 		var keys = Object.keys(a);
 		for(var i = 0; i < keys.length; i++){
-			f(keys[i],a[keys[i]]);
+			if(false === f(keys[i],a[keys[i]])) break;
 		}
+		return a;
 	}
 }
 var $ = new jQ();
@@ -632,7 +633,7 @@ function generateResourcesforTile(type, areaType)
 		var r = random(1000);
 		if(r <= resourceData[keys[i]].chance*10)
 		{
-			res[keys[i]] = random(10);
+			res[keys[i]] = random(1,10);
 		}
 	}
 	return res;
