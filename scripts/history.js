@@ -353,6 +353,7 @@ var histEvents = function(culture, city)
 	this.Anarchy = new histEvent(-1, m(["Anarchy","+750"],["GreatLeader","=0"],["CivilWar","+5"])),
 	this.Authoritarian = new histEvent(-1, m(["Democracy", "=0"],["Dictatorship","+3"],["CivilWar","-2"],["GreatArtist","-3"])),
 	this.BoomingPopulation = new histEvent(0, function(culture,city){changeCityPopulation(city, 1+ Math.round(city.population / random(5,10)));}),
+	this.BuiltAWall = new histEvent(1, m(["BuiltAWall", "=1000"], ["Weak","-100"], ["Raided", "-500"])),
 	this.CivilWar = new histEvent(-1, function(culture,city,arg1){ }, 1),
 	this.ConqueredByX = new histEvent(0,function(culture,city,arg1){}, 1),
 	this.ConqueredX = new histEvent(0, function(culture,city,arg1){}, 1),
@@ -377,15 +378,16 @@ var histEvents = function(culture, city)
 	this.Plague = new histEvent(0.25, m(["Plague", "+750"], ["Tradesmen", "-400"], ["Weak", "+300"], ["Starvation", "+400"], ["BoomingPopulation", "-800"])),
 	this.Poor = new histEvent(0, function(culture,city){},0),//              if: low value                                         effect: - democracy, + rebellion, + aggression
 	this.Racism = new histEvent(-1, function(culture,city,arg1){},1),            //if: low distance to nearest culture                   effect: + in Turmoil, - wisdom
-	this.Rebellion = new histEvent(-2, function(culture,city){},0), // this.if: low amount of food                                effect: pop down, wealth down
+	this.Raided = new histEvent(2, m(["Starvation", "+500"], ["Rich", "-300"], ["BuiltAWall","+5"])),
+	this.Rebellion = new histEvent(-2, function(culture,city){},0), // this.if: low amount of food           effect: pop down, wealth down
 	this.ReceivedReligionFrom = new histEvent(0,function(culture,city,arg1){},0),
 	this.Religious = new histEvent(0, function(culture,city,arg1){},1), 
-	this.Rich = new histEvent(0, function(culture,city){},0),             // if: high value                                        effect: + democracy, + rebellion, - wisdom
+	this.Rich = new histEvent(0, m(["Rich", "+800"], ["Tradesmen", "+100"], ["Raided", "+100"], ["BuiltAWall", "+50"])),         // if: high value                                        effect: + democracy, + rebellion, - wisdom
 	this.Shrinking = new histEvent(0, function(cu,ci){changeCitySize(ci,-1);}),
 	this.Starvation = new histEvent(0, function(culture,city){changeCityPopulation(city, -Math.round(city.population / random(5,10)));}),
 	this.SpawnedReligion = new histEvent(-2, function(culture,city,arg1){},1),
 	this.SpreadReligionTo = new histEvent(0,function(culture,city,arg1){},1),
-	this.Tradesmen = new histEvent(0, function(culture,city,arg1){},1), //         if: has abundance of resource, or lacks one.	   effect: + wealth, + in Turmoil, + Democracy
+	this.Tradesmen = new histEvent(0, m(["Tradesmen", "+900"], ["Rich", "+400"], ["Starvation", "-200"])), //         if: has abundance of resource, or lacks one.	   effect: + wealth, + in Turmoil, + Democracy
 	this.WarRidden = new histEvent(0, function(culture,city){},0), //        if: several wars                                      effect: + aggression, + great warrior
 	this.Weak = new histEvent(0, function(culture,city){},0)// 	     if: lost war, low iron, low aggression, etc.
 
@@ -476,7 +478,7 @@ var settlementNames = [
 ];
 
 function generateHistory(years){
-	print("generating history over " +years + " years");
+	print("Generating history over " +years + " years");
 	var t1 = new Date();
 	initHistory();
 	var cultures = (world.cultures) ? world.cultures : cultures;
@@ -529,6 +531,7 @@ function generateHistory(years){
 				});
 			}
 		}
+		print("Generating history (Year " + year + " of " + years +")");
 	}
 	var t2 = new Date();
 	timeDiff(t2,t1, "Generating history for " + world.cities.length + " cities over " + years + " years, took: ");

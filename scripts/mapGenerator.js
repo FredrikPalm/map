@@ -769,6 +769,14 @@ function generateRiverFrom(start,riverLength){
 			end = end.cameFrom;
 			if(end == start) break;
 		}
+		$.each(path, function(i,item){
+			delete(item.visited);
+			delete(item.closed);
+			delete(item.h);
+			delete(item.f);
+			delete(item.g);
+			delete(item.cameFrom);
+		});
 		rivers.push(path);
 		lastSeason = -1;
 		sendMessage("Generated river of length " + path.length + " , there are now " + rivers.length + " rivers");
@@ -813,6 +821,14 @@ function generateRoadTo(start,goal,maxLength){
 			if(end == start) break;
 		}
 		var road = {"id":roads.length, "connections" : connections,  "path" : path, "from" : areas[start.field], "to" : areas[goal.field]};
+		$.each(road.path, function(i,item){
+			delete(item.visited);
+			delete(item.closed);
+			delete(item.h);
+			delete(item.f);
+			delete(item.g);
+			delete(item.cameFrom);
+		});
 		roads.push(road);
 		return road;
 	};

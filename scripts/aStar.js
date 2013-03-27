@@ -9,7 +9,7 @@ function cleanupHeap(set1,heap){
 		delete(item.cameFrom);
 	}
 	delete(set1);
-	if(heap !== undefined){
+    if(heap !== undefined){
 		while(heap.size() > 0) {
 			var item = heap.pop();
 			delete(item.visited);
@@ -36,7 +36,7 @@ function euclideanDistance(pos1, pos2){
 function distanceBetween(start, neighbour){
     var g; 
     var multiplier = 3;
-    if(!!neighbour.road){
+    if(neighbour.road){
         multiplier = 1;
     }
     if(neighbour.type == "mountain"){

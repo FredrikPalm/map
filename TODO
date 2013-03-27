@@ -41,9 +41,7 @@ AI:
 		Don't magically reset food and drink and other products
  
 BUGS/FIXES:
-	ChangeCitySize: area bugs (removeFromArea, border)
 	Rivers don't flow towards nearest water body
-	Roads on settlement tiles should be drawn as settlement tiles.
 	All filters don't seem to work?
 	City names not always visible (drawn beneath other filters or out of view)
 	City names sometimes too obviously french girl names
