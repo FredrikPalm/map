@@ -4,6 +4,7 @@ Features:
 	Procedurally generated: Lakes, Mountains, Forests, Rivers, Sand
 	Intelligently placed: Cities, Roads, Cultures
 	Dynamically developed: History, and populations
+
 Planned: 
 	AI driven people
 	Factories and markets
@@ -11,3 +12,18 @@ Planned:
 	Religion and great people
 	Dynasties
 	Player control
+
+Use:
+	Note: This map generator is still very much in development, and will crash/bug out.
+
+	Please consider using Chrome.
+	Go to fpalm.se/map
+	Press "Dynasty". 
+	Wait for the map to be generated. This shouldn't take more than a minute
+	If it crashes, try resizing the window and trying again.
+	Press "start" to start the "game". Altenatively you can press "New Game With Options" to generate another world.
+
+	Once running the "game", you can do the following:
+		Use mouse wheel to zoom in or out. 
+		Use keyboard to move around the map.
+		Press tiles or cities for more info.
