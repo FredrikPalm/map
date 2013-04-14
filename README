@@ -1,5 +1,7 @@
 DYN is a map generator written in javascript. 
 
+It's not the most well written or thought-out code ever, but there are some interesting problems and solutions in there somewhere. Unfortunately this was one of the first web projects I started, so the quality of the code can be absolutely dreadful in places. Several years and other projects later it is now shaping up to be a rather nice map generator, and hopefully will continue to be as I add more and more features.
+
 Features:
 	Procedurally generated: Lakes, Mountains, Forests, Rivers, Sand
 	Intelligently placed: Cities, Roads, Cultures
