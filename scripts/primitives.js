@@ -40,18 +40,18 @@ var mapRules = {"water":{"freq":0.20,"size":{"min":0.05,"max":0.08}},
 var resourceData = 
 {
 /*  variable, 			Name, Value, TileType, AreaType, Chance of Occuring, Foodvalue, Drinkvalue, Depletion   */
-	'cow':new Resource("Cow", 80, 'grass', 'shallow', 5, 1000, 100),
-	'sheep':new Resource("Sheep", 60, 'grass', 'any', 2, 400, 0),
-	'horse':new Resource("Horse",70, 'grass', 'deep', 1, 200, 0),
-	'wheat':new Resource("Wheat",50, 'grass', 'any', 10, 500, 0),
-	'stone':new Resource("Stone",10, 'mountain', 'any', 100, 0, 0),
-	'iron':new Resource("Iron",1000, 'mountain', 'any', 0.15, 0, 0),
-	'copper':new Resource("Copper",700, 'mountain', 'any', 0.20, 0, 0),
-	'coal':new Resource("Coal",200, 'mountain', 'any', 2, 0, 0),
+	'cow':new Resource("Cow", 80, 'grass', 'shallow', 5, 200, 10),
+	'sheep':new Resource("Sheep", 60, 'grass', 'any', 2, 150, 0),
+	'horse':new Resource("Horse",70, 'grass', 'deep', 1, 180, 0),
+	'wheat':new Resource("Wheat",50, 'grass', 'any', 10, 100, 0),
+	'stone':new Resource("Stone",10, 'mountain', 'any', 10, 0, 0),
+	'iron':new Resource("Iron",100, 'mountain', 'any', 0.15, 0, 0),
+	'copper':new Resource("Copper",70, 'mountain', 'any', 0.20, 0, 0),
+	'coal':new Resource("Coal",20, 'mountain', 'any', 2, 0, 0),
 	'wood':new Resource("Wood",10, 'forest', 'any', 100, 0, 0),
-	'pigs':new Resource("Pigs",50, 'forest', 'any', 3, 800, 0),
-	'fish':new Resource("Fish",10, 'water', 'any', 10, 400, 0),
-	'dwater':new Resource("Drinking Water",1, 'water', 'shallow', 100, 0, 1000),
+	'pigs':new Resource("Pigs",50, 'forest', 'any', 3, 150, 0),
+	'fish':new Resource("Fish",10, 'water', 'any', 10, 100, 0),
+	'dwater':new Resource("Drinking Water",1, 'water', 'shallow', 100, 0, 100),
 	'sand':new Resource("Sand",1,'sand','any',100, 0, 0)
 }
 var rivers;
@@ -142,6 +142,73 @@ function removeFromArea(area,location){
 	});
 }
 
+function memberTile(array,tile){
+	var index = -1;
+	$.each(array, function(i,val){
+		if(val.x == tile.x && val.y == tile.y){
+			index = i;
+			return false;
+		}
+	});
+	return index;
+}
+
+function isMember(array,tile){
+	return memberTile(array,tile) != -1;
+}
+
+function forEachTile(f){
+	$.each(world.tiles, function(x,val){
+		$.each(val, function(y, tile){
+		   return f(tile,x,y);
+		});
+	});
+}
+
+function forEachCity(f){
+   $.each(world.cities, function(i,val){
+       return f(world.areas[val]);
+   });
+}
+
+function forEachArea(f){
+	$.each(world.areas, function(i,val){
+		if(i[0] == "a") return f(val);
+	});
+}
+
+function combine(){
+	var res = {};
+	$.each(arguments, function(i,val){
+		$.each(val, function(name, value){
+			if(res[name]){
+				res[name] += value; //doesn't really work unless they are numbers.
+			}
+			else{
+				res[name] = value;
+			}
+		});
+	});
+	return res;
+}
+
+function merge(){
+	var obj1 = arguments[0];
+	for(var i = 1; i < arguments.length; i++){
+		$.each(arguments[i], function(name,value){
+			if(obj1[name]){
+				obj1[name] += value; //doesn't really work unless they are numbers.
+			}
+			else{
+				obj1[name] = value;
+			}
+		});
+	}
+	return obj1;
+}
+
+
+
 function timeDiff(t0,t1,message){
 	print(message + (t0.getTime() - t1.getTime()) +  "ms");
 }
@@ -202,4 +269,28 @@ function getUrlVar(afterChar) {
 
 function rgba(r,g,b,a){
 	return {"r":r,"g":g,"b":b,"a":a};
+}
+
+function saveWorld(compress){
+	if(compress){
+		//not loss less
+		delete(world.areas);
+		delete(world.cities);	//would need to save names, history etc somewhere.
+		delete(world.cultures);
+		delete(world.rivers);
+		delete(world.roads);
+		delete(world.people);
+		forEachTile(function(tile){
+			delete(tile.neighbours);
+			delete(tile.community);
+			delete(tile.borders);
+			delete(tile.globalPosition);
+			delete(tile.special);
+			delete(tile.selected);
+			delete(tile.value);
+			delete(tile.baseValue);
+			delete(tile.field);
+		});
+	}
+	return JSON.stringify(world);
 }

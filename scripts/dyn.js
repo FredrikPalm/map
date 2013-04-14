@@ -265,7 +265,14 @@ function updateTileInfo(tile)
 	var population = tile.population;
 	var value = tile.value;
 	var id = "ID: " + tile.globalPosition.x + ", " + tile.globalPosition.y;
+	forEachCity(function(city){
+		try{
+			city.showRange.hide();
+		}
+		catch(e){
 
+		}
+	});
 	try{	
 		var area = world.areas[tile.field];
 		if(area.type == "settlement"){
@@ -274,6 +281,8 @@ function updateTileInfo(tile)
 			population = city.population;
 			//	value = city.value;
 			id = "City " + tile.field;
+
+			city.showRange.show();
 		}	
 	}
 	catch(e){
@@ -393,6 +402,16 @@ function drawSingleTile(cctx, x, y, fillColor, strokeColor){
                 cctx.fillRect(xStart,yStart,tileWidth,tileHeight);
             }
         });
+    }
+    if(tile.special){
+    	$.each(tile.special, function(i,val){
+    		var color = val(tile,cctx,xStart,yStart);
+            if(color){
+                cctx.fillStyle = color;
+                cctx.strokeStyle = color;
+                cctx.fillRect(xStart,yStart,tileWidth,tileHeight);
+            }
+    	});
     }
 	if((!fog || inrange) && world.tiles[x][y].type == "settlement" && world.tiles[x][y].borders != null){
 
@@ -1137,9 +1156,7 @@ function init(){
 	uiHover = (iOSDevice) ? "touchstart" : "mouseover";
 	uiHoverEnd = (iOSDevice) ? "touchend" : "mouseout";
 	uiDblClick = (iOSDevice) ? "double-tap" : "dblclick";
-	scale = tileSize = (iOSDevice) ? 8 : 2;
-	sizeX = Math.floor(w/tileSize);
-	sizeY = Math.floor(h/tileSize);	
+	setWorldSize((iOSDevice) ? 8 : 3);
     initFilters();
 	
 		/*Look a URL to see if parameters have been sent*/
@@ -1159,6 +1176,20 @@ function init(){
 	}
 	selectMode();
 	//openInitMenu(showMap);	
+}
+
+var worldSize = {
+	"tiny" : 8,
+	"small" : 4,
+	"medium" : 3,
+	"large" : 2,
+	"huge" : 1,
+};
+
+function setWorldSize(size){
+	tileSize = scale = size;
+	sizeX = Math.floor(w/tileSize);
+	sizeY = Math.floor(h/tileSize);	
 }
 
 function print(s){console.log(s);}

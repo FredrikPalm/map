@@ -37,34 +37,51 @@ function cityHistFacts(culture,city){
 	}
 };
 
-function Evaluator(field, city, comparison, cutOff){
-	var value = 0;
-
-	// TODO - redesign this entirely. 
-
-	if(city[field] == undefined){
-		for(var i = 0; i < city.tiles.length; i++){
-			var tile = lookUpCoord(city.tiles[i]);
-			if(tile.resources[field] !== undefined){
-				value += tile.resources[field];
-			}
-		}
+function Evaluator(city, fields, comparison, cutOff, type, fact){
+	var obj = city;
+	var field = fields[fields.length - 1];
+	for(var i = 0; i < fields.length - 1; i++){
+		obj = city[fields[i]];
+		if(obj === undefined) return function(city){ return true;};
+	}
+	if(type == "monotone"){
+		return function(city){
+			if(city.facts[fact].inEffect) return true;
+			return comparison(city, obj[field], cutOff);
+		};
+	}
+	else if(type == "antimonotone"){
+		return function(city){
+			if(!city.facts[fact].inEffect) return false;
+			return comparison(city, obj[field], cutOff);
+		};
 	}
 	else{
-		value = city[field];
+		return function(city){
+			return comparison(city, obj[field], cutOff);
+		};
 	}
+}
 
-	function a(city){
-		var value = city[field];
-		return comparison(value, city, cutOff);
+function EvaluatorObject(city, fields, comparison, cutOff, effect, type, fact){
+	this.name = fact;
+	this.effect = effect;
+	this.inEffect = (type === "antimonotone") ? true : false;
+	this.evaluate = Evaluator(city, fields, comparison, cutOff, type, fact);
+	this.inEffect = this.evaluate(city);
+}
+
+function factMaker(city){
+	return function(name, fields, comparison, cutOff, effect, type){
+		city.facts[name] = new EvaluatorObject(city, fields, comparison, cutOff, effect, type, name);
 	};
-	return a;
 }
 
 function generateCultures(){
-	cultures = [];
+	world.cultures = [];
 	analyseCities();
-	cultures = findCultures(Math.round(world.cities.length / 5));
+	world.cultures = findCultures(Math.round(world.cities.length / 5));
+	forEachCity(findNearestAreas);
 }
 
 function findCultures(amount){
@@ -126,48 +143,7 @@ function findCultures(amount){
 	return clusters;
 }
 
-function analyseCity(city){
-	var pop = 0;
-	var xTot = 0;
-	var yTot = 0;
-	var xMin = Infinity;
-	var xMax = -1;
-	var yMin = Infinity;
-	var yMax = -1;
-	
-	var food = 0;
-	var drink = 0;
-	//TODO other resources as necessary
 
-	for(var k = 0; k < city.tiles.length; k++){
-		var tile = lookUpCoord(city.tiles[k]);
-		if(tile.population !== undefined) pop += tile.population;
-		var x = city.tiles[k].x;
-		var y = city.tiles[k].y;
-		xTot += x;
-		yTot += y;
-		if(x < xMin){ xMin = x; }
-		if(x > xMax){ xMax = x; }
-		if(y < yMin){ yMin = y; }
-		if(y > xMax){ yMax = y; }
-
-		$.each(tile.resources, function(i,val){
-			food += val * resourceData[i].foodValue;
-			drink += val * resourceData[i].drinkValue;
-		});
-		//TODO other resources as necessary
-
-	}
-	city.population = pop;
-	city.food = food;
-	city.drink = drink;
-	city.density = city.population / city.tiles.length;
-	var xMean = xTot / city.tiles.length;
-	var yMean = yTot / city.tiles.length;
-	var radius = Math.max ((xMean - xMin), (yMean - yMin), (xMax - xMean), (yMax - yMean));
-	city.center = {"x":xMean,"y":yMean};
-	city.radius = radius;
-}
 
 function analyseCities(){
 	//adds population
@@ -181,29 +157,27 @@ function analyseCities(){
 	}
 }
 
-function histFacts(culture, city)
-{	if(city.population === undefined){
+function buildCityFacts(culture, city)
+{	
+	if(city.population === undefined){
 		city.population = countPopulation(city);
 	}	
 
-	var lessP = function(a,city,b){return a/city.population < b;};
-	var moreP = function(a,city,b){return a/city.population > b;};
-	var sameP = function(a,city,b){return Math.abs(a/city.population-b) < 1;};
-	var less = function(a,city,b){return a < b;};
-	var more = function(a,city,b){return a > b;};
-	var same = function(a,city,b){return Math.abs(a-b) < 1;};
+	var lessP = function(city,a,b){return a/city.population < b;};
+	var moreP = function(city,a,b){return a/city.population > b;};
+	var sameP = function(city,a,b){return Math.abs(a/city.population-b) < 1;};
+	var less = function(city,a,b){return a < b;};
+	var more = function(city,a,b){return a > b;};
+	var same = function(city,a,b){return Math.abs(a-b) < 1;};
 	var m = makeEventEffect(city,culture);
-	//								  returns false if one-shot
-	/* variable, 	                 evaluator,                        effect,   
-	Ab=Abundance, La = Lack						
-												                  //use +-Infinity to set to 0 or 1000                          */
-	this.AbFood = new histFact(Evaluator("food", city, moreP, 1), m(["Starvation", "=0"], ["BoomingPopulation", "=200"], ["Rebellion", "-2"])),
-	this.LaFood = new histFact(Evaluator("food", city, lessP, 0.5), m(["Starvation", "=200"], ["BoomingPopulation", "=0"], ["Rebellion", "+2"])),
-	this.AbIron = new histFact(Evaluator("iron", city, moreP, 0.02), m(["MilitaryMight", "+1"])),
-	this.LaSpace = new histFact(Evaluator("density", city, more, 1000), m(["Growing", "+30"], ["Shrinking", "=0"])),
-	this.AbSpace = new histFact(Evaluator("density", city, less, 100), m(["Growing", "=0"], ["Shrinking", "=30"]));
+	var k = factMaker(city);
+	city.facts = {};
+	k("AbFood", ["food"], moreP, 1, m(["Starvation", "=0"], ["BoomingPopulation", "=200"], ["Rebellion", "-2"]));
+	k("LaFood", ["food"], lessP, 0.5, m(["Starvation", "=200"], ["BoomingPopulation", "=0"], ["Rebellion", "+2"]));
+	k("AbIron", ["allResources", "iron"], moreP, 0.02, m(["MilitaryMight", "+1"]));
+	k("LaSpace", ["density"], more, 1000, m(["Growing", "+30"], ["Shrinking", "=0"]));
+	k("AbSpace", ["density"], less, 100, m(["Growing", "=0"], ["Shrinking", "=30"]));
 }
-
 
 function parseDotNotation(str){
 	// seperate string into array
@@ -387,7 +361,7 @@ var histEvents = function(culture, city)
 	this.Starvation = new histEvent(0, function(culture,city){changeCityPopulation(city, -Math.round(city.population / random(5,10)));}),
 	this.SpawnedReligion = new histEvent(-2, function(culture,city,arg1){},1),
 	this.SpreadReligionTo = new histEvent(0,function(culture,city,arg1){},1),
-	this.Tradesmen = new histEvent(0, m(["Tradesmen", "+900"], ["Rich", "+400"], ["Starvation", "-200"])), //         if: has abundance of resource, or lacks one.	   effect: + wealth, + in Turmoil, + Democracy
+	this.Tradesmen = new histEvent(1, m(["Tradesmen", "+900"], ["Rich", "+400"], ["Starvation", "-200"])), //         if: has abundance of resource, or lacks one.	   effect: + wealth, + in Turmoil, + Democracy
 	this.WarRidden = new histEvent(0, function(culture,city){},0), //        if: several wars                                      effect: + aggression, + great warrior
 	this.Weak = new histEvent(0, function(culture,city){},0)// 	     if: lost war, low iron, low aggression, etc.
 
@@ -403,12 +377,13 @@ var histEvents = function(culture, city)
 };
 
 function initHistory(){
+	var cultures = world.cultures;
 	for(var i = 0; i < cultures.length; i++){
 		for(var k = 0; k < cultures[i].length; k++) {
 			var city = cultures[i][k];
 			city.h = {};
 			city.h = new histEvents(cultures[i],city);
-			city.facts = new histFacts(cultures[i],city);
+			buildCityFacts(cultures[i],city);
 			city.history = {};
 		}
 	}
@@ -499,7 +474,7 @@ function generateHistory(years){
 				});
 
 				$.each(city.facts, function(n,val){
-					if(val.inEffect = val.evaluation(city)){
+					if(val.inEffect = val.evaluate(city)){
 						val.effect(cultures[i],city);
 					}
 				});

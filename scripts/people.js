@@ -421,6 +421,14 @@ function changeCitySize(city, amount){
 			tile.population = Math.round(city.density);
 			i++;
 		}
+		$.each(city.vicinity, function(i,val){
+			if(val == undefined) return true;
+			var tile = lookUpCoord(val);
+			if(tile.type == "settlement"){
+				city.vicinity.splice(i,1);
+			}
+		});
+		getCityRange(city);
 	}
 	else if(amount < 0){
 		amount = Math.min(city.tiles.length - 1, Math.abs(amount)); // at least one tile left
@@ -517,6 +525,8 @@ function changeCitySize(city, amount){
 			}
 			i++;
 		}
+		delete(city.vicinity); //rather expensive...
+		getCityRange(city);
 	}
 }
 
@@ -582,7 +592,7 @@ function tileMaxPopSize(tile){
 	{
 		return 0;
 	}
-	return resFood;
+	return resFood*2;
 }
 
 /* Generate a human population for the world 
@@ -600,9 +610,10 @@ function generatePopulation(){
 	var lowestAccepted = {tile:0, value:Infinity};
 	var tiles = [];
 	var size = world.sizeX * world.sizeY;
-	var places = Math.round(Math.max(50, size * (random(1,5)/800)));
-	var amount = places*100;
-	var amountPeople = amount/100;
+	var places = Math.round(Math.max(10, Math.min(50, size * (random(1,10) / 20000))));
+	print("Potential city amount: " + places);
+	var amount = places*1000;
+	var amountPeople = places;
 	for(var x = 0; x < world.tiles.length; x++){
 		for(var y = 0; y < world.tiles[0].length; y++){
 			var tile = world.tiles[x][y];
@@ -633,7 +644,6 @@ function generatePopulation(){
 			}
 		}
 	}
-	
 	tiles = tiles.sort(function(a,b){return b.value - a.value;});
 	amountLeft = amount;
 	amountPLeft = amountPeople;

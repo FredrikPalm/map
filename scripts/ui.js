@@ -37,5 +37,35 @@ function initFilters(){
 			food += val * resourceData[i].foodValue;
 		});
 	};
-	filters = [showPopulation, showCultures, showPlaceNames];
+	filters = [showPopulation, showPlaceNames];
+}
+
+function showTileGroup(group){ //VERY inefficient. Checks if member for EVERY tile drawn on screen.
+	var r = function(tile){
+		if(isMember(group, tile.globalPosition)){
+			return "rgba(130,30,30,0.5)";
+		}
+		return false;
+	};
+	filters.push(r);
+	return r;
+}
+
+var groupCounter = 0;
+function showHideTileGroup(group, color){
+	var id = groupCounter++;
+	function show(){
+		$.each(group, function(i,coord){
+			var tile = lookUpCoord(coord);
+			if(!tile.special) tile.special = {}
+			tile.special[id] = color;
+		});
+	}
+	function hide(){
+		$.each(group, function(i,coord){
+			var tile = lookUpCoord(coord);
+			delete(tile.special[id]);
+		});
+	}
+	return {"id":id, "show":show, "hide":hide};
 }

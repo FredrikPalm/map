@@ -30,6 +30,7 @@ function craftNewWorld(tilesize, seed, times){
 				$("#newPlayer").show();
 				$("#progress").hide();
 				stopLoading();
+				var fs = []; forEachCity(function(city){color = function(tile){return getRandomColor(city.cultureID, world.cultures.length, 0.3);}; f = showHideTileGroup(city.vicinity, color); fs.push(f); city.showRange = f;});
 				drawWorld3(world);
 			}
 		else{

@@ -1,7 +1,7 @@
 // uses web workers to generate world
 function importResources(){
 	importScripts("res/malenames-french.js","res/femalenames-french.js","res/surnames-french.js");
-	importScripts("history.js", "primitives.js", "people.js", "../../scripts/mersenne-random.js","../../scripts/json.js", "aStar.js"); //also aStar, history, events, and whatever else I'd like to share between main program and this
+	importScripts("cities.js", "history.js", "primitives.js", "people.js", "../../scripts/mersenne-random.js","../../scripts/json.js", "aStar.js"); //also aStar, history, events, and whatever else I'd like to share between main program and this
 }
 
 onmessage = function(event){
@@ -15,7 +15,6 @@ onmessage = function(event){
 		params = event.data;
 		sizeX = params.sizeX;
 		sizeY = params.sizeY;
-		postMessage("hi! " + params.name);
 		m = new MersenneTwister(params.seed);	
 		craftNewWorld();
 		self.close();
@@ -106,20 +105,21 @@ function craftNewWorld(times){
 	world.people = allPeople;
 	world.population = people;
 	world.cities = cities; 
-	cultures = [];
 	culture = 0;
 	generateCultures();
 	t2 = new Date();
 	timeDiff(t2,t1,"Culture generation took : ");
 	sendMessage("\nGenerating history");
-	world.cultures = cultures;
     generateHistory(1000);
 	var player = allPeople[random(0,allPeople.length-1)]; //new generatePerson(); //needs areas to pick a city at random.
 	createDynasty(player); //move these to newGame()
 	sendMessage("\nWorld generation done!");
 	var tEnd = new Date();
 	timeDiff(tEnd,tStart,"World generation took : ");
-	world.cultures = cultures;
+	areas = 0;
+	cultures = 0;
+	cities = 0;
+	allPeople = 0;
 	postMessage(JSON.stringify(world)); 
 }
 
@@ -449,7 +449,7 @@ function measureDepth(worldT, type, heightModeOn){
 									}
 									else{
 										if(tile.type == "mountain"){
-											if(depth == 1 && random(300) > 275){
+											if(depth == 1 && random(300) > 295){
 												riverSources.push({"x":cx,"y":cy});
 											}
 										}
